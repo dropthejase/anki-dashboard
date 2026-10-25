@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars
+dist/
+test-results/
+playwright-report/
+.venv/
+__pycache__/
+*.ankiaddon
+.pytest_cache/
