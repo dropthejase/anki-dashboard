@@ -1,0 +1,227 @@
+import { requireUser } from "./auth";
+import { inviteToken, randomId, timingSafeEqual } from "./crypto";
+import { HttpError, json, notFound, readJson } from "./http";
+import { rateLimit } from "./ratelimit";
+import type { Ctx, Role, UserRow } from "./types";
+import { addDays, boardName, HEX32, isRealDate, plausibleDate, utcDate } from "./validate";
+
+const TOP_N = 100;
+const MAX_BOARDS_PER_USER = 50;
+
+interface BoardRow {
+  id: string;
+  name: string;
+  invite_enabled: number;
+  invite_epoch: number;
+  member_cap: number | null;
+}
+
+/**
+ * Every board route starts here. A non-member gets exactly the same 404 as a board that does not exist,
+ * so board existence is never revealed.
+ */
+async function requireMember(c: Ctx, boardId: string): Promise<{ user: UserRow; board: BoardRow; role: Role }> {
+  const user = await requireUser(c);
+  if (!HEX32.test(boardId)) throw notFound();
+  const row = await c.env.DB.prepare(
+    `SELECT b.id, b.name, b.invite_enabled, b.invite_epoch, b.member_cap, m.role
+     FROM boards b JOIN memberships m ON m.board_id = b.id AND m.user_id = ? WHERE b.id = ?`,
+  )
+    .bind(user.id, boardId)
+    .first<BoardRow & { role: Role }>();
+  if (!row) throw notFound();
+  const { role, ...board } = row;
+  return { user, board, role };
+}
+
+async function requireAdmin(c: Ctx, boardId: string) {
+  const m = await requireMember(c, boardId);
+  if (m.role !== "admin") throw new HttpError(403, "admin_required");
+  return m;
+}
+
+const joinPath = async (c: Ctx, b: BoardRow) =>
+  `/join#${b.id}.${await inviteToken(c.env.INVITE_HMAC_KEY, b.id, b.invite_epoch)}`;
+
+export async function createBoard(c: Ctx): Promise<Response> {
+  const user = await requireUser(c);
+  const name = boardName((await readJson(c.req)).name);
+  await rateLimit(c, "board-create-user", user.id, 20, 86_400);
+  const count = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM memberships WHERE user_id = ?")
+    .bind(user.id)
+    .first<{ n: number }>();
+  if ((count?.n ?? 0) >= MAX_BOARDS_PER_USER) throw new HttpError(409, "too_many_boards");
+  const id = randomId();
+  await c.env.DB.batch([
+    c.env.DB.prepare("INSERT INTO boards (id, name, created_at) VALUES (?, ?, ?)").bind(id, name, c.now),
+    c.env.DB.prepare("INSERT INTO memberships (board_id, user_id, role, joined_at) VALUES (?, ?, 'admin', ?)").bind(
+      id,
+      user.id,
+      c.now,
+    ),
+  ]);
+  return json({ id, name }, 201);
+}
+
+export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
+  const { user, board, role } = await requireMember(c, boardId);
+  const requested = c.url.searchParams.get("date");
+  if (requested !== null && !(isRealDate(requested) && plausibleDate(requested, c.now))) {
+    throw new HttpError(400, "invalid_date");
+  }
+  const date = requested ?? utcDate(c.now);
+  const members = await c.env.DB.prepare(
+    `SELECT * FROM (
+       SELECT ROW_NUMBER() OVER (ORDER BY today DESC, week DESC, display_name) AS rank, * FROM (
+         SELECT u.id AS user_id, u.display_name, m.role, m.joined_at,
+                COALESCE(SUM(CASE WHEN d.local_date = ?2 THEN d.review_count END), 0) AS today,
+                COALESCE(SUM(d.review_count), 0) AS week,
+                MAX(d.updated_at) AS last_updated
+         FROM memberships m JOIN users u ON u.id = m.user_id
+         LEFT JOIN daily_stats d ON d.user_id = u.id AND d.local_date BETWEEN ?3 AND ?2
+         WHERE m.board_id = ?1 GROUP BY u.id))
+     WHERE rank <= ?4 OR user_id = ?5 ORDER BY rank`,
+  )
+    .bind(board.id, date, addDays(date, -6), TOP_N, user.id)
+    .all<{ rank: number; user_id: string; display_name: string; role: Role; joined_at: number; today: number; week: number; last_updated: number | null }>();
+  const total = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM memberships WHERE board_id = ?")
+    .bind(board.id)
+    .first<{ n: number }>();
+  const showInvite = role === "admin" || board.invite_enabled === 1;
+  return json({
+    board: { id: board.id, name: board.name, invite_enabled: board.invite_enabled === 1, member_cap: board.member_cap, member_count: total?.n ?? 0 },
+    role,
+    date,
+    join_path: showInvite && board.invite_enabled === 1 ? await joinPath(c, board) : null,
+    members: members.results.map((m) => ({ ...m, is_me: m.user_id === user.id })),
+  });
+}
+
+export async function updateBoard(c: Ctx, boardId: string): Promise<Response> {
+  const { board } = await requireAdmin(c, boardId);
+  const body = await readJson(c.req);
+  const sets: string[] = [];
+  const vals: (string | number | null)[] = [];
+  if ("name" in body) {
+    sets.push("name = ?");
+    vals.push(boardName(body.name));
+  }
+  if ("invite_enabled" in body) {
+    if (typeof body.invite_enabled !== "boolean") throw new HttpError(400, "invalid_invite_enabled");
+    sets.push("invite_enabled = ?");
+    vals.push(body.invite_enabled ? 1 : 0);
+  }
+  if ("member_cap" in body) {
+    const cap = body.member_cap;
+    if (cap !== null && !(typeof cap === "number" && Number.isInteger(cap) && cap >= 1 && cap <= 100_000)) {
+      throw new HttpError(400, "invalid_member_cap");
+    }
+    sets.push("member_cap = ?");
+    vals.push(cap);
+  }
+  if (sets.length === 0) throw new HttpError(400, "nothing_to_update");
+  await c.env.DB.prepare(`UPDATE boards SET ${sets.join(", ")} WHERE id = ?`).bind(...vals, board.id).run();
+  return json({ ok: true });
+}
+
+export async function regenerateInvite(c: Ctx, boardId: string): Promise<Response> {
+  const { board } = await requireAdmin(c, boardId);
+  const next = await c.env.DB.prepare("UPDATE boards SET invite_epoch = invite_epoch + 1 WHERE id = ? RETURNING *")
+    .bind(board.id)
+    .first<BoardRow>();
+  return json({ join_path: next ? await joinPath(c, next) : null });
+}
+
+export async function setRole(c: Ctx, boardId: string, targetId: string): Promise<Response> {
+  const { board } = await requireAdmin(c, boardId);
+  const role = (await readJson(c.req)).role;
+  if (role !== "admin" && role !== "member") throw new HttpError(400, "invalid_role");
+  const exists = await c.env.DB.prepare("SELECT role FROM memberships WHERE board_id = ? AND user_id = ?")
+    .bind(board.id, targetId)
+    .first<{ role: Role }>();
+  if (!exists) throw notFound();
+  // One statement, so two concurrent demotions cannot leave the board without an admin.
+  const res = await c.env.DB.prepare(
+    `UPDATE memberships SET role = ?1 WHERE board_id = ?2 AND user_id = ?3
+     AND (?1 = 'admin' OR role <> 'admin' OR (SELECT COUNT(*) FROM memberships WHERE board_id = ?2 AND role = 'admin') > 1)`,
+  )
+    .bind(role, board.id, targetId)
+    .run();
+  if (res.meta.changes === 0) throw new HttpError(409, "last_admin");
+  return json({ ok: true });
+}
+
+export async function kick(c: Ctx, boardId: string, targetId: string): Promise<Response> {
+  const { user, board } = await requireAdmin(c, boardId);
+  if (targetId === user.id) throw new HttpError(400, "use_leave");
+  const res = await c.env.DB.prepare("DELETE FROM memberships WHERE board_id = ? AND user_id = ?")
+    .bind(board.id, targetId)
+    .run();
+  if (res.meta.changes === 0) throw notFound();
+  return json({ ok: true });
+}
+
+export async function leave(c: Ctx, boardId: string): Promise<Response> {
+  const { user, board } = await requireMember(c, boardId);
+  const [res] = await c.env.DB.batch([
+    // Blocks the sole admin from leaving a board that still has other members.
+    c.env.DB.prepare(
+      `DELETE FROM memberships WHERE board_id = ?1 AND user_id = ?2
+       AND NOT (role = 'admin'
+         AND (SELECT COUNT(*) FROM memberships WHERE board_id = ?1 AND role = 'admin') = 1
+         AND (SELECT COUNT(*) FROM memberships WHERE board_id = ?1) > 1)`,
+    ).bind(board.id, user.id),
+    c.env.DB.prepare("DELETE FROM boards WHERE id = ? AND NOT EXISTS (SELECT 1 FROM memberships WHERE board_id = boards.id)").bind(
+      board.id,
+    ),
+  ]);
+  if (res?.meta.changes === 0) throw new HttpError(409, "last_admin");
+  return json({ ok: true });
+}
+
+/** Resolves a join attempt. Missing board, disabled link and wrong token are indistinguishable. */
+async function resolveInvite(c: Ctx): Promise<{ user: UserRow; board: BoardRow }> {
+  const user = await requireUser(c);
+  await rateLimit(c, "join-user", user.id, 30, 3600);
+  await rateLimit(c, "join-ip", c.ip, 120, 3600);
+  const body = await readJson(c.req);
+  const { board_id: id, token } = body;
+  if (typeof id !== "string" || !HEX32.test(id) || typeof token !== "string" || token.length > 64) throw notFound();
+  const board = await c.env.DB.prepare("SELECT id, name, invite_enabled, invite_epoch, member_cap FROM boards WHERE id = ?")
+    .bind(id)
+    .first<BoardRow>();
+  const expected = await inviteToken(c.env.INVITE_HMAC_KEY, id, board?.invite_epoch ?? 0);
+  const valid = timingSafeEqual(expected, token);
+  if (!board || board.invite_enabled !== 1 || !valid) throw notFound();
+  return { user, board };
+}
+
+export async function previewJoin(c: Ctx): Promise<Response> {
+  const { user, board } = await resolveInvite(c);
+  const n = await c.env.DB.prepare(
+    "SELECT COUNT(*) AS members, SUM(user_id = ?) AS mine FROM memberships WHERE board_id = ?",
+  )
+    .bind(user.id, board.id)
+    .first<{ members: number; mine: number | null }>();
+  return json({ name: board.name, member_count: n?.members ?? 0, already_member: (n?.mine ?? 0) > 0 });
+}
+
+export async function join(c: Ctx): Promise<Response> {
+  const { user, board } = await resolveInvite(c);
+  const mine = await c.env.DB.prepare("SELECT COUNT(*) AS n, SUM(board_id = ?) AS here FROM memberships WHERE user_id = ?")
+    .bind(board.id, user.id)
+    .first<{ n: number; here: number | null }>();
+  if ((mine?.here ?? 0) > 0) return json({ board_id: board.id, already_member: true });
+  if ((mine?.n ?? 0) >= MAX_BOARDS_PER_USER) throw new HttpError(409, "too_many_boards");
+  // The cap is checked inside the insert, so concurrent joins cannot exceed it.
+  const res = await c.env.DB.prepare(
+    `INSERT INTO memberships (board_id, user_id, role, joined_at)
+     SELECT ?1, ?2, 'member', ?3
+     WHERE (SELECT member_cap FROM boards WHERE id = ?1) IS NULL
+        OR (SELECT COUNT(*) FROM memberships WHERE board_id = ?1) < (SELECT member_cap FROM boards WHERE id = ?1)`,
+  )
+    .bind(board.id, user.id, c.now)
+    .run();
+  if (res.meta.changes === 0) throw new HttpError(409, "board_full");
+  return json({ board_id: board.id, already_member: false }, 201);
+}
