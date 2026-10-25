@@ -12,7 +12,8 @@
     "test:web": "vitest run -c vitest.web.config.ts",
     "test:addon": ".venv/bin/python -m pytest -q",
     "package:addon": "scripts/package-addon.sh",
-    "test:all": "npm run typecheck && npm test && npm run test:web && npm run test:addon"
+    "test:all": "npm run typecheck && npm test && npm run test:web && npm run test:addon",
+    "dev:login": "node scripts/dev-login.mjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.4.7",
