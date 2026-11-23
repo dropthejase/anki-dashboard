@@ -129,7 +129,7 @@ function Account() {
           }}
         >
           <Input aria-label="Display name" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} required />
-          <Button type="submit" variant="outline">Save name</Button>
+          <Button type="submit">Save name</Button>
         </form>
         {msg && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}
         <div className="border-t border-border pt-4">
