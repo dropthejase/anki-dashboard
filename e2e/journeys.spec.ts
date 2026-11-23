@@ -67,8 +67,9 @@ test("create a board, invite through the link, and see counts and admin controls
   // Admin removes Bob; Bob loses access immediately.
   await alicePage.getByRole("button", { name: "Refresh" }).click();
   await expect(alicePage.getByTestId("member-row")).toHaveCount(2);
-  await alicePage.getByRole("button", { name: "Remove" }).click();
-  await alicePage.getByRole("button", { name: "Yes" }).click();
+  await alicePage.getByRole("button", { name: /^Actions for / }).click();
+  await alicePage.getByRole("menuitem", { name: "Remove from board" }).click();
+  await alicePage.getByRole("menu").getByRole("button", { name: "Remove" }).click();
   await expect(alicePage.getByTestId("member-row")).toHaveCount(1);
   await bobPage.reload();
   await expect(bobPage.getByRole("heading", { name: "Board not found" })).toBeVisible();

@@ -5,6 +5,7 @@ import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
 import { InvitePanel } from "../components/InvitePanel";
 import { Leaderboard, LeaderboardSkeleton } from "../components/Leaderboard";
+import { MemberMenu } from "../components/MemberMenu";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -65,16 +66,11 @@ export function Board({ id }: { id: string }) {
   const isAdmin = view?.role === "admin";
   const memberActions = (m: Member) =>
     isAdmin && !m.is_me ? (
-      <span className="inline-flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => act(() => api("POST", `/api/boards/${id}/members/${m.user_id}/role`, { role: m.role === "admin" ? "member" : "admin" }))}
-        >
-          {m.role === "admin" ? "Demote" : "Make admin"}
-        </Button>
-        <ConfirmButton variant="dangerOutline" label="Remove" confirmLabel={`Remove ${m.display_name}?`} onConfirm={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))} />
-      </span>
+      <MemberMenu
+        member={m}
+        onToggleRole={() => act(() => api("POST", `/api/boards/${id}/members/${m.user_id}/role`, { role: m.role === "admin" ? "member" : "admin" }))}
+        onRemove={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))}
+      />
     ) : null;
 
   return (
@@ -141,7 +137,7 @@ export function Board({ id }: { id: string }) {
   );
 }
 
-function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" | "dangerOutline" }) {
+function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" }) {
   const [asking, setAsking] = useState(false);
   if (!asking) return <Button size="sm" variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
   return (

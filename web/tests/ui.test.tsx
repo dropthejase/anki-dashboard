@@ -19,7 +19,7 @@ describe("Leaderboard", () => {
     expect(screen.getByLabelText("1st place")).toBeInTheDocument();
     expect(screen.getByLabelText("3rd place")).toBeInTheDocument();
     expect(screen.queryByLabelText("4th place")).toBeNull();
-    expect(within(screen.getAllByTestId("member-row")[3]!).getByText("You")).toBeInTheDocument();
+    expect(within(screen.getAllByTestId("member-row")[3]!).getByText("(you)")).toBeInTheDocument();
   });
 
   it("renders hostile names as text, never as markup", () => {
@@ -93,5 +93,26 @@ describe("BoardStats", () => {
     const { BoardStats } = await import("../src/components/BoardStats");
     const { container } = render(<BoardStats total={1} members={[m({})]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("MemberMenu", () => {
+  it("opens, toggles the role, and needs a confirmation to remove", async () => {
+    const { MemberMenu } = await import("../src/components/MemberMenu");
+    const { fireEvent } = await import("@testing-library/react");
+    let role = 0;
+    let removed = 0;
+    render(<MemberMenu member={m({ display_name: "Bo" })} onToggleRole={() => void role++} onRemove={() => void removed++} />);
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Bo" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Make admin" }));
+    expect(role).toBe(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Bo" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Remove from board" }));
+    expect(removed).toBe(0);
+    fireEvent.click(within(screen.getByRole("menu")).getByRole("button", { name: "Remove" }));
+    expect(removed).toBe(1);
   });
 });

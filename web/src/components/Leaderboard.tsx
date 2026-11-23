@@ -1,4 +1,4 @@
-import { Crown, Medal } from "lucide-react";
+import { Crown, Medal, Sparkle } from "lucide-react";
 import type { Member } from "../api";
 import { timeAgo } from "../lib/utils";
 import { CountUp } from "./CountUp";
@@ -6,7 +6,12 @@ import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
 
 function Rank({ rank }: { rank: number }) {
-  if (rank === 1) return <Badge variant="gold" aria-label="1st place" className="crown-badge"><Crown className="crown h-3 w-3" aria-hidden />1</Badge>;
+  if (rank === 1) return <Badge variant="gold" aria-label="1st place" className="crown-badge relative">
+        <span className="shine" aria-hidden />
+        <Crown className="crown h-3 w-3" aria-hidden />1
+        <Sparkle className="sparkle sparkle-a fill-current" aria-hidden />
+        <Sparkle className="sparkle sparkle-b fill-current" aria-hidden />
+      </Badge>;
   if (rank === 2) return <Badge variant="silver" aria-label="2nd place"><Medal className="h-3 w-3" aria-hidden />2</Badge>;
   if (rank === 3) return <Badge variant="bronze" aria-label="3rd place"><Medal className="h-3 w-3" aria-hidden />3</Badge>;
   return <span className="px-2.5 text-sm text-muted-foreground">{rank}</span>;
@@ -39,14 +44,14 @@ export function Leaderboard({ members, actions }: { members: Member[]; actions?:
               key={m.user_id}
               data-testid="member-row"
               style={{ "--i": i } as React.CSSProperties}
-              className={`row-in border-b border-border/60 transition-colors ${m.is_me ? "bg-emerald-500/10 hover:bg-emerald-500/15" : "hover:bg-muted"}`}
+              className={`row-in border-b border-border/60 transition-colors ${m.is_me ? "bg-accent/10 hover:bg-accent/15 [&>td:first-child]:shadow-[inset_3px_0_0_var(--accent)]" : "hover:bg-muted"}`}
             >
               <td className="px-3 py-3"><Rank rank={m.rank} /></td>
               <td className="px-3 py-3">
                 <div className="flex flex-col">
                   <span className="flex items-center gap-2 font-medium">
                     {m.display_name}
-                    {m.is_me && <Badge variant="you">You</Badge>}
+                    {m.is_me && <span className="sr-only">(you)</span>}
                     {m.role === "admin" && <Badge>Admin</Badge>}
                   </span>
                   <span className="text-xs text-muted-foreground">Updated {timeAgo(m.last_updated)}</span>
