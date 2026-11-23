@@ -1,9 +1,10 @@
-import { ArrowLeft, RefreshCw, Settings, Trash2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
 import { InvitePanel } from "../components/InvitePanel";
+import { BoardMenu } from "../components/BoardMenu";
 import { DeleteBoardDialog } from "../components/DeleteBoardDialog";
 import { Leaderboard, LeaderboardSkeleton } from "../components/Leaderboard";
 import { MemberMenu } from "../components/MemberMenu";
@@ -94,11 +95,6 @@ export function Board({ id }: { id: string }) {
             {view && <p className="text-sm text-muted-foreground">{view.board.member_count} {view.board.member_count === 1 ? "member" : "members"} · cards reviewed</p>}
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" size="sm" aria-expanded={showSettings} onClick={() => setShowSettings((v) => !v)}>
-                <Settings className="h-3.5 w-3.5" aria-hidden /> Board settings
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -108,6 +104,23 @@ export function Board({ id }: { id: string }) {
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden /> Refresh
             </Button>
+            {view && (
+              <BoardMenu
+                isAdmin={isAdmin}
+                settingsOpen={showSettings}
+                onToggleSettings={() => setShowSettings((v) => !v)}
+                onlyMember={view.board.member_count === 1}
+                onLeave={async () => {
+                  try {
+                    await api("POST", `/api/boards/${id}/leave`);
+                    await refreshSession();
+                    navigate("/");
+                  } catch (e) {
+                    setError(errorText(e));
+                  }
+                }}
+              />
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -136,26 +149,6 @@ export function Board({ id }: { id: string }) {
             onDeleted={async () => {
               await refreshSession();
               navigate("/");
-            }}
-          />
-        </div>
-      )}
-
-      {view && (
-        <div>
-          <ConfirmButton
-            label="Leave board"
-            variant="outline"
-            size="default"
-            confirmLabel={view.board.member_count === 1 ? "You are the last member, so this deletes the board. Leave?" : "Leave this board?"}
-            onConfirm={async () => {
-              try {
-                await api("POST", `/api/boards/${id}/leave`);
-                await refreshSession();
-                navigate("/");
-              } catch (e) {
-                setError(errorText(e));
-              }
             }}
           />
         </div>

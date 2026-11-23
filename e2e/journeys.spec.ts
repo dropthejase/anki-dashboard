@@ -62,7 +62,10 @@ test("create a board, invite through the link, and see counts and admin controls
   await expect(rows.nth(0).getByTestId("today")).toHaveText("120");
   await expect(rows.nth(1)).toContainText("Bob");
   await expect(rows.nth(1).getByTestId("week")).toHaveText("45");
-  await expect(bobPage.getByRole("button", { name: "Board settings" })).toHaveCount(0); // members get no admin UI
+  await bobPage.getByRole("button", { name: "Board options" }).click();
+  await expect(bobPage.getByRole("menuitem", { name: "Leave board" })).toBeVisible();
+  await expect(bobPage.getByRole("menuitem", { name: "Board settings" })).toHaveCount(0); // members get no admin UI
+  await bobPage.keyboard.press("Escape");
   await expect(bobPage.getByRole("heading", { name: "Admin settings" })).toHaveCount(0);
 
   // Admin removes Bob; Bob loses access immediately.
@@ -84,7 +87,8 @@ test("turning the invite link off and regenerating it blocks old links", async (
   await alicePage.getByRole("button", { name: "Create" }).click();
   const oldInvite = (await alicePage.getByTestId("invite-url").textContent())!;
 
-  await alicePage.getByRole("button", { name: "Board settings" }).click();
+  await alicePage.getByRole("button", { name: "Board options" }).click();
+  await alicePage.getByRole("menuitem", { name: "Board settings" }).click();
   await alicePage.getByRole("button", { name: "Regenerate link" }).click();
   await alicePage.getByRole("button", { name: "Yes" }).click();
   await expect(alicePage.getByTestId("invite-url")).not.toHaveText(oldInvite);
@@ -162,7 +166,8 @@ test("an admin deletes a board by typing its name, and members lose it", async (
   await bobPage.getByRole("button", { name: /Join/ }).click();
   await expect(bobPage.getByTestId("board-name")).toHaveText("Doomed");
 
-  await alicePage.getByRole("button", { name: "Board settings" }).click();
+  await alicePage.getByRole("button", { name: "Board options" }).click();
+  await alicePage.getByRole("menuitem", { name: "Board settings" }).click();
   await alicePage.getByRole("button", { name: "Delete board" }).click();
   const dialog = alicePage.getByRole("dialog", { name: "Delete this board?" });
   const confirmDelete = dialog.getByRole("button", { name: "Delete board" });
@@ -173,4 +178,23 @@ test("an admin deletes a board by typing its name, and members lose it", async (
 
   await bobPage.reload();
   await expect(bobPage.getByRole("heading", { name: "Board not found" })).toBeVisible();
+});
+
+test("a member leaves a board from the options menu after confirming", async ({ browser, request }) => {
+  const alice = await newUser(request, "Alice");
+  const bob = await newUser(request, "Bob");
+  const alicePage = await signedIn(browser, alice);
+  await alicePage.getByLabel("Board name").first().fill("Revolving door");
+  await alicePage.getByRole("button", { name: "Create" }).click();
+  const invite = (await alicePage.getByTestId("invite-url").textContent())!;
+  const bobPage = await signedIn(browser, bob);
+  await bobPage.goto(invite);
+  await bobPage.getByRole("button", { name: /Join/ }).click();
+  await expect(bobPage.getByTestId("board-name")).toHaveText("Revolving door");
+
+  await bobPage.getByRole("button", { name: "Board options" }).click();
+  await bobPage.getByRole("menuitem", { name: "Leave board" }).click();
+  await expect(bobPage.getByRole("menu").getByText("Leave this board?")).toBeVisible();
+  await bobPage.getByRole("menu").getByRole("button", { name: "Leave" }).click();
+  await expect(bobPage.getByText("You are not on any board yet")).toBeVisible();
 });

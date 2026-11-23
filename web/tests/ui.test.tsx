@@ -157,3 +157,24 @@ describe("DeleteBoardDialog", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("BoardMenu", () => {
+  it("shows settings only to admins and asks before leaving", async () => {
+    const { BoardMenu } = await import("../src/components/BoardMenu");
+    const { fireEvent } = await import("@testing-library/react");
+    let left = 0;
+    const props = { settingsOpen: false, onToggleSettings: () => {}, onlyMember: false, onLeave: () => void left++ };
+    const { unmount } = render(<BoardMenu {...props} isAdmin={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Board options" }));
+    expect(screen.queryByRole("menuitem", { name: "Board settings" })).toBeNull();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Leave board" }));
+    expect(left).toBe(0);
+    fireEvent.click(within(screen.getByRole("menu")).getByRole("button", { name: "Leave" }));
+    expect(left).toBe(1);
+    unmount();
+
+    render(<BoardMenu {...props} isAdmin />);
+    fireEvent.click(screen.getByRole("button", { name: "Board options" }));
+    expect(screen.getByRole("menuitem", { name: "Board settings" })).toBeInTheDocument();
+  });
+});
