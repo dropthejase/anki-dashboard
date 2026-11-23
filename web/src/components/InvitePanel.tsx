@@ -1,6 +1,7 @@
 import { Check, Copy } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
+import { Code } from "./Code";
 import { Button } from "./ui/button";
 
 export function InvitePanel({ joinPath }: { joinPath: string }) {
@@ -16,7 +17,7 @@ export function InvitePanel({ joinPath }: { joinPath: string }) {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
       {qr && <img src={qr} alt="QR code for the invite link" width={96} height={96} className="rounded-lg border border-border bg-white" />}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <code data-testid="invite-url" className="block truncate rounded-md bg-muted px-2 py-1.5 text-xs">{url}</code>
+        <Code data-testid="invite-url" className="block truncate rounded-md px-2 py-1.5 text-xs">{url}</Code>
         <div>
           <Button
             variant="outline"

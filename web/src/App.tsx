@@ -70,6 +70,7 @@ export function App() {
                 <HelpCircle className="h-4 w-4" aria-hidden /> Help
               </Button>
               <GithubLink />
+              <span className="mx-1 h-5 w-px bg-border" aria-hidden />
               <ThemeToggle />
               {me && (
                 <>
