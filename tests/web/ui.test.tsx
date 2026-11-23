@@ -1,9 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { Member } from "../src/api";
-import { Leaderboard } from "../src/components/Leaderboard";
-import { applyTheme, storedTheme } from "../src/lib/theme";
-import { timeAgo } from "../src/lib/utils";
+import type { Member } from "../../web/src/api";
+import { Leaderboard } from "../../web/src/components/Leaderboard";
+import { applyTheme, storedTheme } from "../../web/src/lib/theme";
+import { timeAgo } from "../../web/src/lib/utils";
 
 const m = (over: Partial<Member>): Member => ({
   rank: 1, user_id: "u", display_name: "A", role: "member", today: 0, week: 0, last_updated: null, is_me: false, ...over,
@@ -62,7 +62,7 @@ describe("timeAgo", () => {
 
 describe("Help page", () => {
   it("explains the phone-to-desktop sync order", async () => {
-    const { Help } = await import("../src/pages/Help");
+    const { Help } = await import("../../web/src/pages/Help");
     render(<Help />);
     expect(screen.getByRole("heading", { name: "Studying on your phone?" })).toBeInTheDocument();
     const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
@@ -74,7 +74,7 @@ describe("Help page", () => {
 
 describe("BoardStats", () => {
   it("shows the caller's rank and how far behind the member above they are", async () => {
-    const { BoardStats } = await import("../src/components/BoardStats");
+    const { BoardStats } = await import("../../web/src/components/BoardStats");
     render(
       <BoardStats
         total={3}
@@ -90,7 +90,7 @@ describe("BoardStats", () => {
   });
 
   it("renders nothing when the caller is not in the list", async () => {
-    const { BoardStats } = await import("../src/components/BoardStats");
+    const { BoardStats } = await import("../../web/src/components/BoardStats");
     const { container } = render(<BoardStats total={1} members={[m({})]} />);
     expect(container).toBeEmptyDOMElement();
   });
@@ -98,7 +98,7 @@ describe("BoardStats", () => {
 
 describe("MemberMenu", () => {
   it("opens, toggles the role, and needs a confirmation to remove", async () => {
-    const { MemberMenu } = await import("../src/components/MemberMenu");
+    const { MemberMenu } = await import("../../web/src/components/MemberMenu");
     const { fireEvent } = await import("@testing-library/react");
     let role = 0;
     let removed = 0;
@@ -119,7 +119,7 @@ describe("MemberMenu", () => {
 
 describe("DeleteBoardDialog", () => {
   it("only enables Delete once the exact name is typed", async () => {
-    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    const { DeleteBoardDialog } = await import("../../web/src/components/DeleteBoardDialog");
     const { fireEvent } = await import("@testing-library/react");
     let closed = 0;
     const confirmed: string[] = [];
@@ -138,7 +138,7 @@ describe("DeleteBoardDialog", () => {
   });
 
   it("closes on Escape and on a backdrop click", async () => {
-    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    const { DeleteBoardDialog } = await import("../../web/src/components/DeleteBoardDialog");
     const { fireEvent } = await import("@testing-library/react");
     let closed = 0;
     render(<DeleteBoardDialog open boardName="Doomed" onClose={() => void closed++} onConfirm={async () => {}} />);
@@ -152,7 +152,7 @@ describe("DeleteBoardDialog", () => {
   });
 
   it("renders nothing when closed", async () => {
-    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    const { DeleteBoardDialog } = await import("../../web/src/components/DeleteBoardDialog");
     render(<DeleteBoardDialog open={false} boardName="X" onClose={() => {}} onConfirm={async () => {}} />);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -160,7 +160,7 @@ describe("DeleteBoardDialog", () => {
 
 describe("BoardMenu", () => {
   it("shows settings only to admins and asks before leaving", async () => {
-    const { BoardMenu } = await import("../src/components/BoardMenu");
+    const { BoardMenu } = await import("../../web/src/components/BoardMenu");
     const { fireEvent } = await import("@testing-library/react");
     let left = 0;
     const props = { settingsOpen: false, onToggleSettings: () => {}, onlyMember: false, onLeave: () => void left++ };

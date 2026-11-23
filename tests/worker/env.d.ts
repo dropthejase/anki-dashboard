@@ -1,4 +1,4 @@
-import type { Env as WorkerEnv } from "../src/types";
+import type { Env as WorkerEnv } from "../../src/types";
 
 declare global {
   namespace Cloudflare {

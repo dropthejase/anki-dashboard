@@ -15,6 +15,6 @@ export default defineConfig(async () => {
         },
       }),
     ],
-    test: { setupFiles: ["./test/setup.ts"], include: ["test/**/*.test.ts"] },
+    test: { setupFiles: ["./tests/worker/setup.ts"], include: ["tests/worker/**/*.test.ts"] },
   };
 });

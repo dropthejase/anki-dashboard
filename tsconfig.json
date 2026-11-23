@@ -10,5 +10,5 @@
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types"]
   },
-  "include": ["src", "test", "vitest.config.ts"]
+  "include": ["src", "tests/worker", "vitest.config.ts"]
 }

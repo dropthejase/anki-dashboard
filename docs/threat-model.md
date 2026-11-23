@@ -117,8 +117,8 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T22 | Never log request bodies, secrets or tokens. | PRD 10 | Log review. |
 | T23 | Treat server responses as untrusted data: parse JSON only, validate fields, never evaluate or download code, and verify TLS certificates. | PRD 6 | Add-on test with malformed and hostile responses. |
 | T24 | The add-on never follows redirects; any redirect is an error. | addon/core.py | `TestRedirects`: a 302 is refused and the secret never reaches the target. |
-| T25 | The Worker refuses to sign or verify invites unless the key is at least 32 characters, returning a 500 instead. | src/crypto.ts | `invite key` test in `test/hardening.test.ts`. |
-| T26 | Bodies are read as a stream with a 4 KB cap and a Content-Length pre-check. | src/http.ts | `request bodies` test in `test/hardening.test.ts`. |
+| T25 | The Worker refuses to sign or verify invites unless the key is at least 32 characters, returning a 500 instead. | src/crypto.ts | `invite key` test in `tests/worker/hardening.test.ts`. |
+| T26 | Bodies are read as a stream with a 4 KB cap and a Content-Length pre-check. | src/http.ts | `request bodies` test in `tests/worker/hardening.test.ts`. |
 
 ### Accepted risks
 

@@ -91,7 +91,7 @@ Build the package:
 npm run package:addon
 ```
 
-This writes `anki_leaderboard.ankiaddon` to the project folder. In Anki Desktop choose Tools, then Add-ons, then Install from file, and pick that file. Restart Anki.
+This writes `dist/anki_leaderboard.ankiaddon`. In Anki Desktop choose Tools, then Add-ons, then Install from file, and pick that file. Restart Anki.
 
 Next point the add-on at your server. In Tools, Add-ons, select Anki Leaderboard, choose Config, and set `server_url` to your Worker address, for example `https://anki-leaderboard.<your-subdomain>.workers.dev`. For local testing use `http://localhost:8787`. Plain http is only accepted for localhost.
 

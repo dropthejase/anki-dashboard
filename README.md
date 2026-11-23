@@ -30,7 +30,7 @@ Phone-only reviews count only if the phone and then Anki Desktop are synced on t
 | `src/` | The Cloudflare Worker API (TypeScript) |
 | `web/` | The React and Tailwind dashboard |
 | `migrations/` | D1 (SQLite) schema |
-| `test/`, `web/tests/`, `tests_addon/`, `e2e/` | Worker, component, add-on and Playwright tests |
+| `tests/` | `worker`, `web`, `addon` and `e2e` test suites |
 | `docs/` | Requirements, decisions, threat model and install guide |
 
 Built with a Cloudflare Worker and D1, React 19, Vite and Tailwind 4. Tests use Vitest, pytest and Playwright.

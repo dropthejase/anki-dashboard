@@ -6,7 +6,7 @@ import { DAY_MS } from "./validate";
 export const SECRET_RE = /^[A-Za-z0-9_-]{43}$/; // 256 bits, base64url
 
 export const SESSION_COOKIE = "__Host-session";
-const SESSION_TTL_MS = 30 * DAY_MS;
+export const SESSION_TTL_MS = 30 * DAY_MS;
 export const SESSION_ABSOLUTE_MS = 90 * DAY_MS;
 const SESSION_EXTEND_EVERY_MS = 3_600_000;
 
@@ -68,4 +68,3 @@ export async function requireUser(c: Ctx): Promise<UserRow> {
   return user;
 }
 
-export const SESSION_TTL = SESSION_TTL_MS;
