@@ -1,6 +1,7 @@
-import { HelpCircle, LogOut, Trophy } from "lucide-react";
+import { ChevronDown, HelpCircle, LogOut, Trophy } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, ApiError, type Me } from "./api";
+import { menuItem, PopoverMenu } from "./components/PopoverMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Button } from "./components/ui/button";
 import { Skeleton } from "./components/ui/skeleton";
@@ -69,25 +70,39 @@ export function App() {
               {me && (
                 <>
                   <span className="mx-2 h-5 w-px bg-border" aria-hidden />
-                  <span className="flex items-center gap-2" data-testid="whoami">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold uppercase" aria-hidden>
-                      {[...me.user.display_name][0]}
-                    </span>
-                    <span className="hidden max-w-32 truncate text-sm font-medium sm:inline">{me.user.display_name}</span>
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Sign out"
-                    title="Sign out"
-                    onClick={async () => {
-                      await api("POST", "/api/logout");
-                      setMe(null);
-                      navigate("/");
-                    }}
+                  <PopoverMenu
+                    label="Account menu"
+                    triggerProps={{ className: "h-9 gap-2 rounded-full px-1.5 sm:pr-3" }}
+                    trigger={
+                      <span className="flex items-center gap-2" data-testid="whoami">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-sm font-semibold uppercase" aria-hidden>
+                          {[...me.user.display_name][0]}
+                        </span>
+                        <span className="hidden max-w-32 truncate text-sm font-medium sm:inline">{me.user.display_name}</span>
+                        <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:block" aria-hidden />
+                      </span>
+                    }
                   >
-                    <LogOut className="h-4 w-4" aria-hidden />
-                  </Button>
+                    {(close) => (
+                      <>
+                        <p className="px-2.5 pb-1 pt-2 text-xs text-muted-foreground">Signed in as</p>
+                        <p className="truncate px-2.5 pb-2 text-sm font-medium">{me.user.display_name}</p>
+                        <div className="my-1 h-px bg-border" />
+                        <button
+                          role="menuitem"
+                          className={menuItem}
+                          onClick={async () => {
+                            close();
+                            await api("POST", "/api/logout");
+                            setMe(null);
+                            navigate("/");
+                          }}
+                        >
+                          <LogOut className="h-4 w-4 text-muted-foreground" aria-hidden /> Sign out
+                        </button>
+                      </>
+                    )}
+                  </PopoverMenu>
                 </>
               )}
             </nav>

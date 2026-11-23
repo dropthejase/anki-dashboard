@@ -1,4 +1,4 @@
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Settings } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
@@ -21,6 +21,7 @@ export function Board({ id }: { id: string }) {
   const [error, setError] = useState("");
   const [cooling, setCooling] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,15 +86,22 @@ export function Board({ id }: { id: string }) {
             <CardTitle data-testid="board-name">{view ? view.board.name : "Loading…"}</CardTitle>
             {view && <p className="text-sm text-muted-foreground">{view.board.member_count} {view.board.member_count === 1 ? "member" : "members"} · cards reviewed</p>}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={loading || cooling}
-            onClick={() => void load()}
-            title="Refresh (limited to once every few seconds)"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button variant="outline" size="sm" aria-expanded={showSettings} onClick={() => setShowSettings((v) => !v)}>
+                <Settings className="h-3.5 w-3.5" aria-hidden /> Board settings
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || cooling}
+              onClick={() => void load()}
+              title="Refresh (limited to once every few seconds)"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden /> Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
@@ -113,7 +121,7 @@ export function Board({ id }: { id: string }) {
         </Card>
       )}
 
-      {view && isAdmin && <AdminSettings view={view} act={act} />}
+      {view && isAdmin && showSettings && <AdminSettings view={view} act={act} />}
 
       {view && (
         <div>

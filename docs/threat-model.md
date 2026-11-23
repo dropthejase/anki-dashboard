@@ -120,6 +120,7 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 - The secret is exposed to AnkiWeb, to any holder of the collection or a backup, and to other add-ons.
 - The service can fail when free-tier limits are reached.
 - A person with two AnkiWeb accounts appears as two identities.
+- Admins are equals with no board owner: a promoted admin can demote or remove the creator or any other admin (elevation within a board, T9 and T12 only cover non-admins and the last admin).
 
 ## 4. Did we do a good job?
 

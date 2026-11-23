@@ -62,7 +62,8 @@ test("create a board, invite through the link, and see counts and admin controls
   await expect(rows.nth(0).getByTestId("today")).toHaveText("120");
   await expect(rows.nth(1)).toContainText("Bob");
   await expect(rows.nth(1).getByTestId("week")).toHaveText("45");
-  await expect(bobPage.getByRole("heading", { name: "Admin settings" })).toHaveCount(0); // members get no admin UI
+  await expect(bobPage.getByRole("button", { name: "Board settings" })).toHaveCount(0); // members get no admin UI
+  await expect(bobPage.getByRole("heading", { name: "Admin settings" })).toHaveCount(0);
 
   // Admin removes Bob; Bob loses access immediately.
   await alicePage.getByRole("button", { name: "Refresh" }).click();
@@ -83,6 +84,7 @@ test("turning the invite link off and regenerating it blocks old links", async (
   await alicePage.getByRole("button", { name: "Create" }).click();
   const oldInvite = (await alicePage.getByTestId("invite-url").textContent())!;
 
+  await alicePage.getByRole("button", { name: "Board settings" }).click();
   await alicePage.getByRole("button", { name: "Regenerate link" }).click();
   await alicePage.getByRole("button", { name: "Yes" }).click();
   await expect(alicePage.getByTestId("invite-url")).not.toHaveText(oldInvite);
