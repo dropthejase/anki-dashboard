@@ -6,6 +6,7 @@ import openLeaderboard from "../assets/help/anki-open-leaderboard.png";
 import toolsAddons from "../assets/help/anki-tools-addons.png";
 import releaseAssets from "../assets/help/release-assets.png";
 import { buttonVariants } from "../components/ui/button";
+import { Code } from "../components/Code";
 import { CopyField } from "../components/CopyField";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { ADDON_DOWNLOAD_URL, INSTALL_GUIDE_URL } from "../lib/links";
@@ -84,7 +85,7 @@ export function Help() {
             <Step n={1} title="Download the add-on">
               <p>
                 Open the latest release and, under <strong className="text-foreground">Assets</strong>, click{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-foreground">anki_leaderboard.ankiaddon</code> to save it.
+                <Code>anki_leaderboard.ankiaddon</Code> to save it.
               </p>
               <a href={ADDON_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants()}>
                 <Download className="h-4 w-4" aria-hidden /> Download the add-on
@@ -105,7 +106,7 @@ export function Help() {
               </p>
               <Screenshot src={addonMenu} alt="The Add-ons window with Anki Leaderboard selected and the Config button on the right" width={978} height={700} maxWidth={420} />
               <p>
-                Set <code className="rounded bg-muted px-1 py-0.5 text-foreground">server_url</code> to this address if it is not already, and click OK:
+                Set <Code>server_url</Code> to this address if it is not already, and click OK:
               </p>
               <CopyField label="Server address" value={location.origin} />
               <Screenshot src={addonConfig} alt="The add-on's Config window with the server_url value highlighted" width={1092} height={448} maxWidth={600} />
