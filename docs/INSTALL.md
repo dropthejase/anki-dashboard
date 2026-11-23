@@ -26,15 +26,21 @@ Run all tests with `npm run test:all`, and the browser journeys with `npm run e2
 
 ## Deploy to your own Cloudflare account
 
-You deploy two things: a Worker that serves the API and the website, and a D1 database. Two secrets of your own are involved: one random key for signing invite links, and your Cloudflare login. Neither belongs in the repository.
+You create two things on your Cloudflare account: a Worker, which runs the API and serves the website, and a D1 database, which stores the data.
 
-Generate the invite key once and keep it somewhere safe. It must be at least 32 characters, and the server refuses to run invites with a shorter one. Rotating it later invalidates every existing invite link.
+Three pieces of information are involved. Only the first two are secret, and none of them should ever be committed to the repository:
+
+- **Your Cloudflare login.** `wrangler login` stores it on your machine, outside the project. In CI or Workers Builds Cloudflare holds it for you.
+- **The invite key.** A random password the server uses to sign invite links. You generate it once and give it to Cloudflare as a secret. It must be at least 32 characters, and the server refuses to run invites with a shorter one. Rotating it later invalidates every existing invite link.
+- **Your database id.** This is only an identifier, not a password: using the database still needs your Cloudflare login. The repository keeps a placeholder, and a small script writes your real id into a git-ignored file, `wrangler.deploy.jsonc`, so nothing tied to your account is ever committed.
+
+Generate the invite key with this command, which prints it without saving it anywhere:
 
 ```bash
 openssl rand -base64 32
 ```
 
-Do not reuse the `local-dev-key-change-me` value from `npm run dev` anywhere public.
+Do not reuse the `local-dev-key-not-for-production-use` value from `npm run dev` anywhere public.
 
 ### Option A: from the command line
 
@@ -44,34 +50,36 @@ npx wrangler login
 npx wrangler d1 create anki-leaderboard
 ```
 
-Copy the `database_id` it prints into `wrangler.jsonc`. The id is not a secret, but it belongs to your account, so keep your edited copy to yourself or commit it to your own fork only.
+The last command prints a `database_id`. Use it as `D1_DATABASE_ID` below. Generate the config file once, then store the invite key as a secret, piped straight in so it is never shown or saved:
 
 ```bash
-npx wrangler d1 migrations apply anki-leaderboard --remote
-npx wrangler secret put INVITE_HMAC_KEY
-npm run build:web
-npx wrangler deploy
+export D1_DATABASE_ID=<the id it printed>
+npm run deploy:config
+openssl rand -base64 32 | npx wrangler secret put INVITE_HMAC_KEY -c wrangler.deploy.jsonc
 ```
 
-Wrangler prints your URL, which looks like `https://anki-leaderboard.<your-subdomain>.workers.dev`.
+Deploy with one command. It builds the site, applies the database migrations to your remote database and deploys the Worker:
 
-To update later, pull the new code and repeat the last three commands. Applying migrations again is safe, because D1 only runs the ones it has not seen.
+```bash
+npm run deploy
+```
+
+Wrangler prints your URL, which looks like `https://anki-leaderboard.<your-subdomain>.workers.dev`. To update later, pull the new code and run `npm run deploy` again. Applying migrations again is safe, because D1 only runs the ones it has not seen.
 
 ### Option B: mostly from the Cloudflare dashboard
 
-You can do most of this without a terminal. The deployment is rebuilt from your GitHub fork every time you push.
+You can do most of this without a terminal, and the deployment is rebuilt from your GitHub fork every time you push.
 
 1. Fork this repository on GitHub.
 2. In the Cloudflare dashboard, go to Storage and databases, then D1, and create a database named `anki-leaderboard`. Copy its database id.
-3. In your fork, edit `wrangler.jsonc` (GitHub's web editor is fine) and replace the placeholder `database_id` with yours.
-4. Go to Workers and Pages, choose to import a repository, and connect your fork. This uses [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/). For an existing Worker the connect button is under Settings, then Builds.
-5. Set the build command to `npm ci && npm run build:web`.
-6. Set the deploy command to `npx wrangler d1 migrations apply anki-leaderboard --remote && npx wrangler deploy`. Migrations are not applied by `wrangler deploy` on its own, so they belong in this command.
-7. Open the Worker, go to Settings, then Variables and Secrets, and add a secret named `INVITE_HMAC_KEY` with your generated key. Choose the runtime secret type, not a build-only variable, because the build variables are not available when the app runs.
+3. Go to Workers and Pages, choose to import a repository, and connect your fork. This uses [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/). For an existing Worker the connect button is under Settings, then Builds.
+4. In the build settings, add a build variable named `D1_DATABASE_ID` with your database id.
+5. Set the build command to `npm ci` and the deploy command to `npm run deploy`. That builds the site, writes the config from your variable, applies the migrations and deploys.
+6. Open the Worker, go to Settings, then Variables and Secrets, and add a secret named `INVITE_HMAC_KEY` with your generated key. Choose the runtime secret type, not a build-only variable, because build variables are not available when the app runs.
 
-If the migration step fails with a permissions error, open the D1 database in the dashboard, go to its Console, and paste in the contents of `migrations/0001_init.sql` instead.
+If the deploy step fails with a permissions error on the migration, open the D1 database in the dashboard, go to its Console, paste in the contents of `migrations/0001_init.sql`, and change the deploy command to `npm run build:web && npm run deploy:config && npx wrangler deploy -c wrangler.deploy.jsonc`.
 
-The one step that cannot be done in a screen is generating the random key, so do that with the command above or any password generator that produces 32 random bytes.
+Whether Workers Builds passes a build variable through to the deploy command has not been confirmed. If `D1_DATABASE_ID` is not found, put the id in your fork's copy of `wrangler.jsonc` instead. It is not a password, but then keep that fork private.
 
 ### Check it works
 
