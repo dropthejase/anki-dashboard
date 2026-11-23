@@ -1,7 +1,8 @@
-import { ChevronRight, HelpCircle, Plus, Trash2, Users } from "lucide-react";
+import { ChevronRight, HelpCircle, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, errorText } from "../api";
 import { useSession } from "../App";
+import { SectionLabel } from "../components/SectionLabel";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -58,108 +59,46 @@ export function Home() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Your boards</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {me.boards.length === 0 ? (
-            <p className="text-muted-foreground">You are not on any board yet. Create one below, or open an invite link.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {me.boards.map((b) => (
-                <li key={b.id}>
-                  <a
-                    href={`/b/${b.id}`}
-                    onClick={(e) => { e.preventDefault(); navigate(`/b/${b.id}`); }}
-                    className="group flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted"
-                  >
-                    <span className="font-medium">{b.name}</span>
-                    <span className="flex items-center gap-3 text-muted-foreground">
-                      {b.role === "admin" && <Badge variant="primary">Admin</Badge>}
-                      <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden />{b.member_count}</span>
-                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Create a board</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={create} className="flex flex-col gap-3 sm:flex-row">
-            <Input aria-label="Board name" placeholder="e.g. SQE1 study group" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} required />
-            <Button type="submit" disabled={busy}>
-              <Plus className="h-4 w-4" aria-hidden /> Create
-            </Button>
-          </form>
-          {error && <p role="alert" className="mt-2 text-danger">{error}</p>}
-        </CardContent>
-      </Card>
-      <Account />
-    </>
-  );
-}
-
-function Account() {
-  const { me, refresh } = useSession();
-  const [name, setName] = useState(me?.user.display_name ?? "");
-  const [msg, setMsg] = useState("");
-  const [confirming, setConfirming] = useState(false);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your account</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <form
-          className="flex flex-col gap-3 sm:flex-row"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await api("PATCH", "/api/me", { display_name: name });
-              await refresh();
-              setMsg("Saved.");
-            } catch (err) {
-              setMsg(errorText(err));
-            }
-          }}
-        >
-          <Input aria-label="Display name" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} required />
-          <Button type="submit" className="shrink-0">Save</Button>
-        </form>
-        {msg && <p role="status" className="text-muted-foreground">{msg}</p>}
-        <div className="border-t border-border pt-4">
-          {!confirming ? (
-            <Button variant="danger" onClick={() => setConfirming(true)}>
-              <Trash2 className="h-4 w-4" aria-hidden /> Delete my account
-            </Button>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <p>This removes your name, review history and board memberships. It cannot be undone.</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="danger"
-                  onClick={async () => {
-                    await api("POST", "/api/me/delete", { confirm: "delete" });
-                    await refresh();
-                    navigate("/");
-                  }}
+      <section aria-label="Your boards">
+        <SectionLabel>Your boards</SectionLabel>
+        {me.boards.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            You are not on any board yet. Create one below, or open an invite link.
+          </p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {me.boards.map((b) => (
+              <li key={b.id}>
+                <a
+                  href={`/b/${b.id}`}
+                  onClick={(e) => { e.preventDefault(); navigate(`/b/${b.id}`); }}
+                  className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md"
                 >
-                  Yes, delete everything
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="break-words text-base font-semibold tracking-tight">{b.name}</span>
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  </span>
+                  <span className="mt-auto flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden />{b.member_count}</span>
+                    {b.role === "admin" && <Badge variant="primary">Admin</Badge>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-label="Create a board">
+        <SectionLabel>Create a board</SectionLabel>
+        <form onSubmit={create} className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-4 sm:flex-row">
+          <Input aria-label="Board name" placeholder="e.g. SQE1 study group" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} required />
+          <Button type="submit" disabled={busy} className="sm:w-28 sm:shrink-0">
+            <Plus className="h-4 w-4" aria-hidden /> Create
+          </Button>
+        </form>
+        {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
+      </section>
+    </>
   );
 }

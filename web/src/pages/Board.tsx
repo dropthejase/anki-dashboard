@@ -166,18 +166,18 @@ function AdminSettings({ view, act }: { view: BoardView; act: (fn: () => Promise
       <CardHeader><CardTitle>Admin settings</CardTitle></CardHeader>
       <CardContent className="flex flex-col gap-6">
         <form
-          className="flex flex-col gap-2 sm:flex-row"
+          className="flex flex-col gap-3 sm:flex-row"
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { name })); }}
         >
           <Input aria-label="Board name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} required />
-          <Button type="submit" variant="outline">Rename</Button>
+          <Button type="submit" variant="outline" className="sm:w-44 sm:shrink-0">Rename</Button>
         </form>
         <form
-          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          className="flex flex-col gap-3 sm:flex-row"
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { member_cap: cap === "" ? null : Number(cap) })); }}
         >
-          <Input aria-label="Member limit" type="number" min={1} placeholder="No limit" value={cap} onChange={(e) => setCap(e.target.value)} className="sm:max-w-40" />
-          <Button type="submit" variant="outline">Set member limit</Button>
+          <Input aria-label="Member limit" type="number" min={1} placeholder="No limit" value={cap} onChange={(e) => setCap(e.target.value)} />
+          <Button type="submit" variant="outline" className="sm:w-44 sm:shrink-0">Set member limit</Button>
         </form>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => void act(() => api("PATCH", `/api/boards/${id}`, { invite_enabled: !view.board.invite_enabled }))}>

@@ -1,4 +1,4 @@
-import { ChevronDown, HelpCircle, LogOut, Trophy } from "lucide-react";
+import { ChevronDown, HelpCircle, LogOut, Trophy, UserRound } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, ApiError, type Me } from "./api";
 import { menuItem, PopoverMenu } from "./components/PopoverMenu";
@@ -8,6 +8,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { navigate, usePath } from "./lib/router";
 import { Board } from "./pages/Board";
 import { Home } from "./pages/Home";
+import { Account } from "./pages/Account";
 import { Help } from "./pages/Help";
 import { Join } from "./pages/Join";
 import { SignIn } from "./pages/SignIn";
@@ -44,6 +45,7 @@ export function App() {
   else if (path === "/help") page = <Help />;
   else if (loading) page = <Skeleton className="h-40 w-full" />;
   else if (path === "/join") page = <Join />;
+  else if (path === "/account") page = me ? <Account /> : <Home />;
   else if (boardId) page = <Board id={boardId} />;
   else page = <Home />;
 
@@ -88,6 +90,16 @@ export function App() {
                         <p className="px-2.5 pb-1 pt-2 text-xs text-muted-foreground">Signed in as</p>
                         <p className="truncate px-2.5 pb-2 text-sm font-medium">{me.user.display_name}</p>
                         <div className="my-1 h-px bg-border" />
+                        <button
+                          role="menuitem"
+                          className={menuItem}
+                          onClick={() => {
+                            close();
+                            navigate("/account");
+                          }}
+                        >
+                          <UserRound className="h-4 w-4 text-muted-foreground" aria-hidden /> Account
+                        </button>
                         <button
                           role="menuitem"
                           className={menuItem}
