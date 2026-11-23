@@ -2,7 +2,7 @@
 
 This guide covers running the project on your own machine, deploying it to your own Cloudflare account, and installing the Anki add-on. Everything runs on Cloudflare's free plan at small scale.
 
-Status: the local steps are tested. The Cloudflare deployment steps have not yet been run end to end on a live account, and dashboard labels change, so treat them as a guide and check the linked Cloudflare docs if a screen looks different.
+Status: the local steps are tested. The command-line deployment (Option A) has been run end to end on a live account. The dashboard route (Option B) has not, and dashboard labels change, so check the linked Cloudflare docs if a screen looks different.
 
 ## What you need
 
