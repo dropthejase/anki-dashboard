@@ -13,3 +13,4 @@ node_modules/
 opencode.json
 playwright-report/
 test-results/
+wrangler.deploy.jsonc
