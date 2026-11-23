@@ -1,4 +1,6 @@
+import http.server
 import sqlite3
+import threading
 from datetime import date, datetime
 
 import pytest
@@ -204,3 +206,46 @@ class TestTransport:
         for bad in ("http://example.com", "ftp://example.com", "javascript:alert(1)", ""):
             with pytest.raises(ValueError):
                 HttpTransport(bad)
+
+
+class TestRedirects:
+    def test_a_redirect_is_an_error_and_never_forwards_the_secret(self):
+        seen = []
+
+        class Target(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                seen.append(self.headers.get("Authorization"))
+                self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            do_POST = do_GET
+
+            def log_message(self, *a):
+                pass
+
+        target = http.server.HTTPServer(("127.0.0.1", 0), Target)
+
+        class Redirector(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.send_response(302)
+                self.send_header("Location", f"http://127.0.0.1:{target.server_port}/steal")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+
+        redirector = http.server.HTTPServer(("127.0.0.1", 0), Redirector)
+        threads = [threading.Thread(target=s.serve_forever, daemon=True) for s in (target, redirector)]
+        for t in threads:
+            t.start()
+        try:
+            transport = HttpTransport(f"http://127.0.0.1:{redirector.server_port}")
+            with pytest.raises(ServerError):
+                transport.post("/api/sync", "s" * 43, {})
+            assert seen == []
+        finally:
+            for s in (target, redirector):
+                s.shutdown()
+                s.server_close()

@@ -85,6 +85,9 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T21 | Personal data | Display names retained too long, or no way to delete them. | I |
 | T22 | Logs | Secrets or tokens written to logs. | I |
 | T23 | Add-on | The add-on trusts a server response in a way that runs attacker-controlled code on the user's machine. | E |
+| T24 | Add-on | A redirect from the server (hostile or misconfigured) makes the add-on forward its Authorization header, the identity secret, to another address, possibly over plain http. | I |
+| T25 | Server HMAC key | A missing, empty or short `INVITE_HMAC_KEY` makes invite links guessable or forgeable. | E |
+| T26 | Worker | An oversized request body is buffered whole into memory before it is rejected. | D |
 
 ## 3. What are we going to do about it?
 
@@ -113,6 +116,9 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T21 | Account deletion, retention rules (30 days and 12 months), and a privacy policy stating them. | PRD 10 | Delete removes all rows. |
 | T22 | Never log request bodies, secrets or tokens. | PRD 10 | Log review. |
 | T23 | Treat server responses as untrusted data: parse JSON only, validate fields, never evaluate or download code, and verify TLS certificates. | PRD 6 | Add-on test with malformed and hostile responses. |
+| T24 | The add-on never follows redirects; any redirect is an error. | addon/core.py | `TestRedirects`: a 302 is refused and the secret never reaches the target. |
+| T25 | The Worker refuses to sign or verify invites unless the key is at least 32 characters, returning a 500 instead. | src/crypto.ts | `invite key` test in `test/hardening.test.ts`. |
+| T26 | Bodies are read as a stream with a 4 KB cap and a Content-Length pre-check. | src/http.ts | `request bodies` test in `test/hardening.test.ts`. |
 
 ### Accepted risks
 

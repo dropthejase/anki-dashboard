@@ -27,7 +27,7 @@ export async function requireDevice(c: Ctx): Promise<UserRow> {
   return user;
 }
 
-function readCookie(req: Request, name: string): string | null {
+export function readCookie(req: Request, name: string): string | null {
   for (const part of (req.headers.get("Cookie") ?? "").split(";")) {
     const [k, ...v] = part.trim().split("=");
     if (k === name) return v.join("=");

@@ -4,6 +4,9 @@ const worker = (exports as unknown as { default: { fetch(r: Request): Promise<Re
 
 export const ORIGIN = "https://leaderboard.test";
 
+/** Sends a hand-built request straight to the Worker, for cases `call` cannot express (such as streamed bodies). */
+export const rawFetch = (r: Request) => worker.fetch(r);
+
 const b64url = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 

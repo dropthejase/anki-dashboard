@@ -4,11 +4,11 @@
   "type": "module",
   "scripts": {
     "build:web": "vite build",
-    "dev": "npm run build:web && wrangler d1 migrations apply anki-leaderboard --local && wrangler dev --var INVITE_HMAC_KEY:local-dev-key-change-me",
+    "dev": "npm run build:web && wrangler d1 migrations apply anki-leaderboard --local && wrangler dev --var INVITE_HMAC_KEY:local-dev-key-not-for-production-use",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc -p web --noEmit",
     "e2e": "playwright test",
-    "e2e:server": "rm -rf .wrangler/e2e && npm run build:web && wrangler d1 migrations apply anki-leaderboard --local --persist-to .wrangler/e2e && wrangler dev --port ${E2E_PORT:-8787} --persist-to .wrangler/e2e --var INVITE_HMAC_KEY:e2e-only-key",
+    "e2e:server": "rm -rf .wrangler/e2e && npm run build:web && wrangler d1 migrations apply anki-leaderboard --local --persist-to .wrangler/e2e && wrangler dev --port ${E2E_PORT:-8787} --persist-to .wrangler/e2e --var INVITE_HMAC_KEY:e2e-only-key-not-for-production-use",
     "test:web": "vitest run -c vitest.web.config.ts",
     "test:addon": ".venv/bin/python -m pytest -q",
     "package:addon": "scripts/package-addon.sh",

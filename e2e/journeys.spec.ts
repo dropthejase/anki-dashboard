@@ -132,6 +132,9 @@ test("security headers and rendering of hostile names", async ({ browser, reques
   const csp = res!.headers()["content-security-policy"];
   expect(csp).toContain("script-src 'self'");
   expect(csp).toContain("frame-ancestors 'none'");
+  expect(res!.headers()["strict-transport-security"]).toContain("max-age=");
+  expect(res!.headers()["cross-origin-opener-policy"]).toBe("same-origin");
+  expect(res!.headers()["permissions-policy"]).toContain("camera=()");
 
   // Names with markup are refused by the API, so nothing hostile can reach a board.
   const r = await request.post("/api/register", {
