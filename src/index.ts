@@ -25,6 +25,7 @@ const routes: [string, RegExp, Handler][] = [
   ["PATCH", new RegExp(`^/api/boards/${ID}$`), (c, p) => boards.updateBoard(c, p[0]!)],
   ["POST", new RegExp(`^/api/boards/${ID}/invite/regenerate$`), (c, p) => boards.regenerateInvite(c, p[0]!)],
   ["POST", new RegExp(`^/api/boards/${ID}/leave$`), (c, p) => boards.leave(c, p[0]!)],
+  ["POST", new RegExp(`^/api/boards/${ID}/delete$`), (c, p) => boards.deleteBoard(c, p[0]!)],
   ["POST", new RegExp(`^/api/boards/${ID}/members/${ID}/role$`), (c, p) => boards.setRole(c, p[0]!, p[1]!)],
   ["DELETE", new RegExp(`^/api/boards/${ID}/members/${ID}$`), (c, p) => boards.kick(c, p[0]!, p[1]!)],
 ];

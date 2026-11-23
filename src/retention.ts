@@ -52,6 +52,7 @@ export async function deleteUser(db: D1Database, userId: string, now: number): P
 export interface PurgeResult {
   neverActivated: number;
   inactive: number;
+  repaired: number;
 }
 
 /** Daily retention job (see PRD section 10). */
@@ -75,11 +76,28 @@ export async function purge(db: D1Database, now: number): Promise<PurgeResult> {
   ).results;
   for (const u of stale) await deleteUser(db, u.id, now);
 
+  // Safety net. The routes already refuse to remove the last admin, but if a board ever has members and no admin
+  // nobody could manage it, so promote its longest-standing (preferring active) member.
+  const repaired = await db
+    .prepare(
+      `UPDATE memberships SET role = 'admin'
+       WHERE (board_id, user_id) IN (
+         SELECT board_id, user_id FROM (
+           SELECT m.board_id, m.user_id,
+             ROW_NUMBER() OVER (PARTITION BY m.board_id ORDER BY (u.last_active_date >= ?1) DESC, m.joined_at ASC) AS rn
+           FROM memberships m JOIN users u ON u.id = m.user_id
+           WHERE m.board_id IN (SELECT board_id FROM memberships GROUP BY board_id HAVING SUM(role = 'admin') = 0)
+         ) WHERE rn = 1)
+       RETURNING board_id`,
+    )
+    .bind(utcDate(now - INACTIVE_AFTER_MS))
+    .all();
+
   await db.batch([
     db.prepare("DELETE FROM login_links WHERE expires_at < ?").bind(now),
     db.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(now),
     db.prepare("DELETE FROM rate_limits WHERE window_start < ?").bind(now - 2 * DAY_MS),
   ]);
 
-  return { neverActivated: never.results.length, inactive: stale.length };
+  return { neverActivated: never.results.length, inactive: stale.length, repaired: repaired.results.length };
 }

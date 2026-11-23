@@ -57,6 +57,19 @@ describe("retention purge", () => {
     expect(await count("SELECT COUNT(*) AS n FROM boards")).toBe(0);
   });
 
+  it("repairs a board that somehow has members but no admin", async () => {
+    const a = await makeUser("A");
+    const b = await makeUser("B");
+    const board = await makeBoard(a);
+    await joinBoard(b, board);
+    await db().prepare("UPDATE memberships SET role = 'member' WHERE board_id = ?").bind(board.id).run();
+    await db().prepare("UPDATE memberships SET joined_at = 1000 WHERE board_id = ? AND user_id = ?").bind(board.id, b.id).run();
+    const result = await purge(db(), Date.now());
+    expect(result.repaired).toBe(1);
+    const admins = await db().prepare("SELECT user_id FROM memberships WHERE board_id = ? AND role = 'admin'").bind(board.id).all<{ user_id: string }>();
+    expect(admins.results.map((r) => r.user_id)).toEqual([b.id]);
+  });
+
   it("clears expired sessions, login links and old rate-limit windows", async () => {
     const u = await makeUser();
     await call("POST", "/api/login-link", { secret: u.secret });

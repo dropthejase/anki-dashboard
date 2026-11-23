@@ -154,10 +154,28 @@ export async function setRole(c: Ctx, boardId: string, targetId: string): Promis
 export async function kick(c: Ctx, boardId: string, targetId: string): Promise<Response> {
   const { user, board } = await requireAdmin(c, boardId);
   if (targetId === user.id) throw new HttpError(400, "use_leave");
-  const res = await c.env.DB.prepare("DELETE FROM memberships WHERE board_id = ? AND user_id = ?")
+  const exists = await c.env.DB.prepare("SELECT 1 AS x FROM memberships WHERE board_id = ? AND user_id = ?")
+    .bind(board.id, targetId)
+    .first();
+  if (!exists) throw notFound();
+  // One statement, so two admins removing each other at once cannot leave the board without an admin.
+  const res = await c.env.DB.prepare(
+    `DELETE FROM memberships WHERE board_id = ?1 AND user_id = ?2
+     AND NOT (role = 'admin' AND (SELECT COUNT(*) FROM memberships WHERE board_id = ?1 AND role = 'admin') = 1)`,
+  )
     .bind(board.id, targetId)
     .run();
-  if (res.meta.changes === 0) throw notFound();
+  if (res.meta.changes === 0) throw new HttpError(409, "last_admin");
+  return json({ ok: true });
+}
+
+/** Deletes the board for everyone. Accounts and review stats are untouched. Needs the exact board name as confirmation. */
+export async function deleteBoard(c: Ctx, boardId: string): Promise<Response> {
+  const { board } = await requireAdmin(c, boardId);
+  const confirm = (await readJson(c.req)).confirm;
+  if (typeof confirm !== "string" || confirm !== board.name) throw new HttpError(400, "confirm_mismatch");
+  // Memberships go with the board through the foreign key cascade.
+  await c.env.DB.prepare("DELETE FROM boards WHERE id = ?").bind(board.id).run();
   return json({ ok: true });
 }
 
