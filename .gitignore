@@ -8,3 +8,7 @@ playwright-report/
 __pycache__/
 *.ankiaddon
 .pytest_cache/
+.DS_Store
+.env
+.env.*
+opencode.json

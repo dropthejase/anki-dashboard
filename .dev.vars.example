@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local development with a plain `wrangler dev`.
+# For production set the secret with `wrangler secret put INVITE_HMAC_KEY` or in the Cloudflare dashboard. Never commit a real key.
+INVITE_HMAC_KEY=replace-with-output-of-openssl-rand-base64-32
