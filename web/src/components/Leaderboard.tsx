@@ -44,7 +44,7 @@ export function Leaderboard({ members, actions }: { members: Member[]; actions?:
               key={m.user_id}
               data-testid="member-row"
               style={{ "--i": i } as React.CSSProperties}
-              className={`row-in border-b border-border/60 transition-colors ${m.is_me ? "bg-accent/10 hover:bg-accent/15 [&>td:first-child]:shadow-[inset_3px_0_0_var(--accent)]" : "hover:bg-muted"}`}
+              className={`row-in border-b border-border/60 transition-colors ${m.is_me ? "bg-foreground/[0.04] hover:bg-foreground/[0.07]" : "hover:bg-muted"}`}
             >
               <td className="px-3 py-3"><Rank rank={m.rank} /></td>
               <td className="px-3 py-3">
