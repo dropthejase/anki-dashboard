@@ -150,5 +150,5 @@ Assumptions to verify:
 - Verified in Anki's source: `gui_hooks.sync_did_finish` exists (no arguments, fires after the collection sync), and `col.get_config` / `col.set_config` read and write the collection config. Not yet verified: that this config actually reaches a second machine through AnkiWeb sync (needs two real Anki installs).
 - Cloudflare free-tier limits at build time.
 - Decision pending: whether to drop the registration proof-of-work step (per-IP rate limiting is in place).
-- Cron triggers on the free plan, D1 backup options, and AnkiWeb MFA and upload eligibility are unverified.
+- Cron triggers: Cloudflare's [limits page](https://developers.cloudflare.com/workers/platform/limits) lists 5 per account on the free plan and we use 1. Not yet confirmed on a live account. D1 backup options, and AnkiWeb MFA and upload eligibility, are unverified.
 - Local `wrangler dev` does not run the scheduled retention job automatically. It is tested directly, and can be triggered with `curl http://localhost:8787/cdn-cgi/local/scheduled`.
