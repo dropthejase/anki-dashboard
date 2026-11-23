@@ -21,9 +21,9 @@ function Flow({ nodes, label }: { nodes: { icon: LucideIcon; text: string }[]; l
     <ol aria-label={label} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted p-4 sm:flex-row sm:justify-between">
       {nodes.map((n, i) => (
         <Fragment key={n.text}>
-          <li className="flex w-full flex-row items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:w-auto sm:flex-col sm:gap-1 sm:px-4 sm:py-3">
+          <li className="flex w-full flex-row items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:w-auto sm:flex-col sm:justify-center sm:gap-1 sm:px-4 sm:py-3">
             <n.icon className="h-6 w-6 text-primary" aria-hidden />
-            <span className="text-sm font-medium">{n.text}</span>
+            <span className="text-center text-sm font-medium">{n.text}</span>
           </li>
           {i < nodes.length - 1 && (
             <>
