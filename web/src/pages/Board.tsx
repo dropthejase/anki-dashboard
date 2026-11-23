@@ -1,5 +1,5 @@
 import { ArrowLeft, RefreshCw, Settings, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
@@ -22,6 +22,7 @@ export function Board({ id }: { id: string }) {
   const [cooling, setCooling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +40,11 @@ export function Board({ id }: { id: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(() => {
+    if (!showSettings) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    settingsRef.current?.scrollIntoView?.({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [showSettings]);
   useEffect(() => {
     if (!cooling) return;
     const t = setTimeout(() => setCooling(false), REFRESH_COOLDOWN_MS);
@@ -122,14 +128,16 @@ export function Board({ id }: { id: string }) {
       )}
 
       {view && isAdmin && showSettings && (
-        <AdminSettings
-          view={view}
-          act={act}
-          onDeleted={async () => {
-            await refreshSession();
-            navigate("/");
-          }}
-        />
+        <div ref={settingsRef} className="scroll-mt-20">
+          <AdminSettings
+            view={view}
+            act={act}
+            onDeleted={async () => {
+              await refreshSession();
+              navigate("/");
+            }}
+          />
+        </div>
       )}
 
       {view && (
