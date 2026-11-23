@@ -18,8 +18,9 @@ Phone-only reviews count only if the phone and then Anki Desktop are synced on t
 ## Documentation
 
 - [Install and self-host](docs/INSTALL.md): run locally, deploy to your own Cloudflare account, install the add-on.
-- [Product requirements](docs/PRD.md)
-- [Identity and authentication decision](docs/adr/0001-identity-and-authentication.md)
+- [Architecture](docs/ARCHITECTURE.md): how it works and what is not yet verified.
+- [Product requirements](docs/PRD.md): the original requirements, kept for reference.
+- [Decision records](docs/adr/): identity, invite links, review counts, and the admin model.
 - [Threat model](docs/threat-model.md)
 
 ## What is in this repository

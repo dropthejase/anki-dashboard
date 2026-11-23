@@ -2,7 +2,8 @@
 
 Read `docs/` before making any design or code decision.
 
-- `docs/PRD.md` is the product requirements (Draft v2).
+- `docs/ARCHITECTURE.md` describes the system as built. Start here.
+- `docs/PRD.md` is the original product requirements, kept as a historical reference.
 - `docs/threat-model.md` is the threat model (Shostack's four questions). Update it when authentication, invites or roles change.
 - `docs/adr/` holds architecture decisions. Start with `0001-identity-and-authentication.md`. Where an ADR and the PRD conflict, the ADR wins.
 
