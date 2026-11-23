@@ -1,6 +1,7 @@
 import { ChevronDown, HelpCircle, LogOut, Trophy, UserRound } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, ApiError, type Me } from "./api";
+import { GithubLink } from "./components/GithubLink";
 import { menuItem, PopoverMenu } from "./components/PopoverMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Button } from "./components/ui/button";
@@ -68,6 +69,7 @@ export function App() {
               <Button variant="ghost" size="sm" onClick={() => navigate("/help")}>
                 <HelpCircle className="h-4 w-4" aria-hidden /> Help
               </Button>
+              <GithubLink />
               <ThemeToggle />
               {me && (
                 <>

@@ -69,7 +69,7 @@ describe("Help page", () => {
     expect(download).toHaveAttribute("href", expect.stringContaining("/releases/latest"));
     expect(download).toHaveAttribute("rel", "noopener noreferrer");
     expect(screen.getByLabelText("Server address")).toHaveTextContent(location.origin);
-    expect(screen.getAllByRole("img")).toHaveLength(4);
+    expect(screen.getAllByRole("img")).toHaveLength(5);
     for (const img of screen.getAllByRole("img")) expect(img).toHaveAttribute("alt", expect.stringMatching(/\w{10,}/));
     expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent).slice(0, 6)).toEqual([
       "Download the add-on", "Install the add-on", "Point the add-on at this site", "Sync Anki", "Open the leaderboard", "Make or join a board",
@@ -186,5 +186,16 @@ describe("BoardMenu", () => {
     render(<BoardMenu {...props} isAdmin />);
     fireEvent.click(screen.getByRole("button", { name: "Board options" }));
     expect(screen.getByRole("menuitem", { name: "Board settings" })).toBeInTheDocument();
+  });
+});
+
+describe("GithubLink", () => {
+  it("links to the repository and opens safely in a new tab", async () => {
+    const { GithubLink } = await import("../../web/src/components/GithubLink");
+    render(<GithubLink />);
+    const link = screen.getByRole("link", { name: "Source code on GitHub" });
+    expect(link).toHaveAttribute("href", "https://github.com/dropthejase/anki-dashboard");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 });
