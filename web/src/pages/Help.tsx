@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, RefreshCw, Smartphone, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, RefreshCw, Smartphone, Trash2, Trophy, type LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import addonConfig from "../assets/help/anki-addon-config.png";
+import addonMenu from "../assets/help/anki-addon-menu.png";
 import openLeaderboard from "../assets/help/anki-open-leaderboard.png";
 import toolsAddons from "../assets/help/anki-tools-addons.png";
 import releaseAssets from "../assets/help/release-assets.png";
@@ -100,11 +101,14 @@ export function Help() {
             <Step n={3} title="Point the add-on at this site">
               <p>
                 Back in <strong className="text-foreground">Tools → Add-ons</strong>, select <strong className="text-foreground">Anki Leaderboard</strong>,
-                then <strong className="text-foreground">Config</strong>. Set <code className="rounded bg-muted px-1 py-0.5 text-foreground">server_url</code> to
-                this address if it is not already, and click OK:
+                then click <strong className="text-foreground">Config</strong>.
+              </p>
+              <Screenshot src={addonMenu} alt="The Add-ons window with Anki Leaderboard selected and the Config button on the right" width={978} height={700} maxWidth={420} />
+              <p>
+                Set <code className="rounded bg-muted px-1 py-0.5 text-foreground">server_url</code> to this address if it is not already, and click OK:
               </p>
               <CopyField label="Server address" value={location.origin} />
-              <Screenshot src={addonConfig} alt="The add-on's Config window with the server_url value highlighted" width={672} height={188} maxWidth={600} />
+              <Screenshot src={addonConfig} alt="The add-on's Config window with the server_url value highlighted" width={1092} height={448} maxWidth={600} />
             </Step>
             <Step n={4} title="Sync Anki">
               Press Sync in Anki. This links you to the leaderboard. There is no password to set.
@@ -160,8 +164,8 @@ export function Help() {
             <p className="text-muted-foreground">Links last two minutes and work once. Choose Tools → Open Leaderboard in Anki to get a new one.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="font-medium">How do I delete my account?</h3>
-            <p className="text-muted-foreground">Sign in, go to the home page, and use Delete my account at the bottom. This removes your name, history and boards.</p>
+            <h3 className="flex items-center gap-2 font-medium"><Trash2 className="h-4 w-4 text-accent" aria-hidden /> How do I delete my account?</h3>
+            <p className="text-muted-foreground">Sign in, open the menu with your name at the top right, choose Account, then Delete my account. This removes your name, history and board memberships.</p>
           </div>
         </CardContent>
       </Card>
