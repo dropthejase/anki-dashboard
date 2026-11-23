@@ -1,6 +1,6 @@
-import { bearerSecret, readCookie, requireDevice, requireSameOrigin, requireUser, SECRET_RE, SESSION_ABSOLUTE_MS, SESSION_COOKIE, sessionCookie, SESSION_TTL } from "./auth";
+import { bearerSecret, readCookie, requireDevice, requireSameOrigin, requireUser, SECRET_RE, SESSION_ABSOLUTE_MS, SESSION_COOKIE, sessionCookie, SESSION_TTL_MS } from "./auth";
 import { randomId, randomToken, sha256Hex } from "./crypto";
-import { HttpError, json, notFound, readJson } from "./http";
+import { HttpError, json, readJson } from "./http";
 import { rateLimit } from "./ratelimit";
 import { deleteUser } from "./retention";
 import type { Ctx } from "./types";
@@ -124,7 +124,7 @@ export async function consumeLoginLink(c: Ctx): Promise<Response> {
       await sha256Hex(sid),
       link.user_id,
       c.now,
-      c.now + SESSION_TTL,
+      c.now + SESSION_TTL_MS,
     ),
     c.env.DB.prepare("UPDATE users SET last_active_date = ? WHERE id = ? AND last_active_date <> ?").bind(
       utcDate(c.now),
@@ -169,4 +169,3 @@ export async function deleteMe(c: Ctx): Promise<Response> {
   return json({ ok: true }, 200, { "Set-Cookie": sessionCookie("", 0) });
 }
 
-export const unknownRoute = () => notFound();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inviteToken } from "../src/crypto";
+import { inviteToken } from "../../src/crypto";
 import { call, makeUser, newSecret, rawFetch } from "./helpers";
 
 describe("invite key", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { purge } from "../src/retention";
+import { purge } from "../../src/retention";
 import { call, db, joinBoard, makeBoard, makeUser, pushStats } from "./helpers";
 
 const DAY = 86_400_000;
