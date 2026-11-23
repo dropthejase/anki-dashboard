@@ -209,10 +209,8 @@ function AdminSettings({ view, act, onDeleted }: { view: BoardView; act: (fn: ()
           />
         </div>
         {!view.board.invite_enabled && <p className="text-sm text-muted-foreground">The invite link is off. Nobody can join with it.</p>}
-        <div className="flex flex-col gap-3 rounded-lg border border-danger/40 p-4">
-          <p className="font-medium text-danger">Delete this board</p>
-          <p className="text-muted-foreground">Removes the board for every member. Accounts and review history are kept. It cannot be undone.</p>
-          <Button variant="danger" className="self-start" onClick={() => setDeleting(true)}>
+        <div className="border-t border-border pt-5">
+          <Button variant="danger" onClick={() => setDeleting(true)}>
             <Trash2 className="h-4 w-4" aria-hidden /> Delete board
           </Button>
         </div>
