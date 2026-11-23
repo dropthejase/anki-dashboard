@@ -163,9 +163,9 @@ export function Board({ id }: { id: string }) {
   );
 }
 
-function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" }) {
+function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost", size = "sm" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "outline" | "danger"; size?: "sm" | "default" }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <Button size="sm" variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
+  if (!asking) return <Button size={size} variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
   return (
     <span className="inline-flex items-center gap-1">
       <span className="text-sm text-muted-foreground">{confirmLabel}</span>
@@ -189,20 +189,22 @@ function AdminSettings({ view, act, onDeleted }: { view: BoardView; act: (fn: ()
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { name })); }}
         >
           <Input aria-label="Board name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} required />
-          <Button type="submit" variant="outline" className="sm:w-44 sm:shrink-0">Rename</Button>
+          <Button type="submit" className="sm:w-44 sm:shrink-0">Rename</Button>
         </form>
         <form
           className="flex flex-col gap-3 sm:flex-row"
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { member_cap: cap === "" ? null : Number(cap) })); }}
         >
           <Input aria-label="Member limit" type="number" min={1} placeholder="No limit" value={cap} onChange={(e) => setCap(e.target.value)} />
-          <Button type="submit" variant="outline" className="sm:w-44 sm:shrink-0">Set member limit</Button>
+          <Button type="submit" className="sm:w-44 sm:shrink-0">Set member limit</Button>
         </form>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => void act(() => api("PATCH", `/api/boards/${id}`, { invite_enabled: !view.board.invite_enabled }))}>
             {view.board.invite_enabled ? "Turn invite link off" : "Turn invite link on"}
           </Button>
           <ConfirmButton
+            variant="outline"
+            size="default"
             label="Regenerate link"
             confirmLabel="Old links stop working. Continue?"
             onConfirm={() => act(() => api("POST", `/api/boards/${id}/invite/regenerate`))}
