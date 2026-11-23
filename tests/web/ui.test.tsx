@@ -69,6 +69,11 @@ describe("Help page", () => {
     expect(download).toHaveAttribute("href", expect.stringContaining("/releases/latest"));
     expect(download).toHaveAttribute("rel", "noopener noreferrer");
     expect(screen.getByLabelText("Server address")).toHaveTextContent(location.origin);
+    expect(screen.getAllByRole("img")).toHaveLength(4);
+    for (const img of screen.getAllByRole("img")) expect(img).toHaveAttribute("alt", expect.stringMatching(/\w{10,}/));
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent).slice(0, 6)).toEqual([
+      "Download the add-on", "Install the add-on", "Point the add-on at this site", "Sync Anki", "Open the leaderboard", "Make or join a board",
+    ]);
     expect(screen.getByRole("link", { name: /See the install guide/ })).toHaveAttribute("href", expect.stringContaining("docs/INSTALL.md"));
     const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
     expect(within(flow).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
