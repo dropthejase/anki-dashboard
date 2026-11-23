@@ -33,7 +33,7 @@ export function Home() {
               Choose <strong>Tools → Open Leaderboard</strong>.
             </li>
           </ol>
-          <a href="/help" onClick={(e) => { e.preventDefault(); navigate("/help"); }} className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline">
+          <a href="/help" onClick={(e) => { e.preventDefault(); navigate("/help"); }} className="inline-flex items-center gap-1.5 font-medium text-accent hover:underline">
             <HelpCircle className="h-4 w-4" aria-hidden /> New here? Read the help page
           </a>
         </CardContent>

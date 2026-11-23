@@ -22,7 +22,7 @@ function Flow({ nodes, label }: { nodes: { icon: LucideIcon; text: string }[]; l
       {nodes.map((n, i) => (
         <Fragment key={n.text}>
           <li className="flex w-full flex-row items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:w-auto sm:flex-col sm:justify-center sm:gap-1 sm:px-4 sm:py-3">
-            <n.icon className="h-6 w-6 text-primary" aria-hidden />
+            <n.icon className="h-6 w-6 text-accent" aria-hidden />
             <span className="text-center text-sm font-medium">{n.text}</span>
           </li>
           {i < nodes.length - 1 && (
@@ -97,11 +97,11 @@ export function Help() {
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-1">
-            <h3 className="flex items-center gap-2 font-medium"><RefreshCw className="h-4 w-4 text-primary" aria-hidden /> My count looks too low</h3>
+            <h3 className="flex items-center gap-2 font-medium"><RefreshCw className="h-4 w-4 text-accent" aria-hidden /> My count looks too low</h3>
             <p className="text-muted-foreground">Counts update when Anki on your computer finishes a sync. Sync, then press Refresh on the board.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="flex items-center gap-2 font-medium"><Link2 className="h-4 w-4 text-primary" aria-hidden /> My sign-in link did not work</h3>
+            <h3 className="flex items-center gap-2 font-medium"><Link2 className="h-4 w-4 text-accent" aria-hidden /> My sign-in link did not work</h3>
             <p className="text-muted-foreground">Links last two minutes and work once. Choose Tools → Open Leaderboard in Anki to get a new one.</p>
           </div>
           <div className="flex flex-col gap-1">
