@@ -71,9 +71,9 @@ All stored tokens (device secret, login links, sessions) are stored as hashes. A
 
 ## 8. Boards and invites
 
-- Creating a board makes the creator admin. A board may have several admins. The last admin cannot leave or demote themselves without promoting someone first.
+- Creating a board makes the creator admin. A board may have several admins. A board must never have members but no admin: the last admin cannot leave, be demoted or be removed without promoting someone first (each is a single guarded statement, so concurrent requests cannot break it). A sole admin who is also the only member can leave, which deletes the board. If an account is deleted or purged, the longest-standing active member is promoted first. As a safety net the daily job promotes a member on any board found with members but no admin.
 - The invite token is `HMAC(server_secret, board_id + invite_epoch)`, computed on demand, so plaintext tokens are never stored. Members can see and share it.
-- Admin controls: enable or disable the link, regenerate it (increments `invite_epoch`, invalidating all old links), kick a member, promote a member, and optionally set a member cap. The invite is also available as a QR code.
+- Admin controls: enable or disable the link, regenerate it (increments `invite_epoch`, invalidating all old links), kick a member, promote or demote a member, optionally set a member cap, and delete the board. Deleting needs the exact board name typed as confirmation, removes the board and its memberships for everyone, and leaves accounts and review stats untouched. The invite is also available as a QR code.
 - Opening a valid link while signed in joins the board immediately, up to the member cap if one is set. Rate-limit the join endpoint.
 - Every board endpoint checks membership and role server-side. Non-members get a not-found style response that does not reveal the board exists.
 
@@ -107,7 +107,7 @@ All stored tokens (device secret, login links, sessions) are stored as hashes. A
 - Signing in on a new browser requires Anki Desktop.
 - Counts are client-reported and spoofable.
 - A person with two AnkiWeb accounts appears as two identities.
-- Board admins are equals. There is no board owner, so any admin can demote or remove any other admin, including the creator. The last admin still cannot demote themselves or leave without promoting someone first. Accepted for v1.
+- Board admins are equals. There is no board owner, so any admin can demote or remove any other admin, including the creator, and any admin can delete the board. The last admin still cannot demote themselves or leave without promoting someone first. Accepted for v1.
 
 ## 12. Cost and limits
 

@@ -101,7 +101,7 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T9 | Membership and role check on every board endpoint. | PRD 8, 10 | Authorisation matrix: non-member, member, admin on every route. |
 | T10 | Non-members get a not-found response. | PRD 8 | Non-member response equals a missing board. |
 | T11 | Check membership on every request, never cache board data publicly. | PRD 8, 9 | Kicked member rejected immediately. |
-| T12 | Last admin cannot leave or demote without promoting someone, enforced in one transaction. | PRD 8 | Concurrent demotion test. |
+| T12 | Last admin cannot leave, demote or be removed without promoting someone, each enforced in one SQL statement. The daily purge repairs any board found with members and no admin. | PRD 8 | Concurrent demotion and mutual-removal tests, repair test. |
 | T13 | Admin can disable or regenerate the link, and optionally set a member cap. Rate-limit joins. | PRD 8 | Disabled and regenerated links rejected. |
 | T14 | Token is `HMAC(server_secret, board_id + invite_epoch)`. Regenerating bumps the epoch. | PRD 8 | Old epoch rejected. |
 | T15 | Keep the key as a Worker secret, separate per environment, never in D1 or the repo. Use random 128-bit board IDs so a leaked key alone cannot forge a link without also knowing the board ID. Rotation is a single key replacement that invalidates all outstanding invite links, which members re-copy from the board page. | PRD 7, 8 | A token made with another key is rejected. Board IDs are non-sequential. |
@@ -120,7 +120,7 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 - The secret is exposed to AnkiWeb, to any holder of the collection or a backup, and to other add-ons.
 - The service can fail when free-tier limits are reached.
 - A person with two AnkiWeb accounts appears as two identities.
-- Admins are equals with no board owner: a promoted admin can demote or remove the creator or any other admin (elevation within a board, T9 and T12 only cover non-admins and the last admin).
+- Admins are equals with no board owner: a promoted admin can demote, remove or delete the board of the creator or any other admin (elevation within a board, T9 and T12 only cover non-admins and the last admin). Board deletion is guarded by admin-only access, an exact-name confirmation and the same-origin check, and is in the authorisation matrix.
 
 ## 4. Did we do a good job?
 

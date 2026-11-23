@@ -55,7 +55,8 @@ export interface BoardView {
 export const errorText = (e: unknown): string => {
   if (e instanceof ApiError) {
     const map: Record<string, string> = {
-      last_admin: "A board needs at least one admin. Promote someone else first.",
+      last_admin: "A board needs at least one admin. Make someone else an admin first, or delete the board.",
+      confirm_mismatch: "The name you typed does not match.",
       board_full: "This board is full.",
       rate_limited: "Too many attempts. Try again later.",
       too_many_boards: "You have reached the board limit.",

@@ -149,3 +149,27 @@ test("account deletion removes the user and signs them out", async ({ browser, r
   const again = await request.post("/api/sync", { headers: { Authorization: `Bearer ${dana.secret}` }, data: { local_date: "2026-10-25", review_count: 1 } });
   expect(again.status()).toBe(401);
 });
+
+test("an admin deletes a board by typing its name, and members lose it", async ({ browser, request }) => {
+  const alice = await newUser(request, "Alice");
+  const bob = await newUser(request, "Bob");
+  const alicePage = await signedIn(browser, alice);
+  await alicePage.getByLabel("Board name").first().fill("Doomed");
+  await alicePage.getByRole("button", { name: "Create" }).click();
+  const invite = (await alicePage.getByTestId("invite-url").textContent())!;
+  const bobPage = await signedIn(browser, bob);
+  await bobPage.goto(invite);
+  await bobPage.getByRole("button", { name: /Join/ }).click();
+  await expect(bobPage.getByTestId("board-name")).toHaveText("Doomed");
+
+  await alicePage.getByRole("button", { name: "Board settings" }).click();
+  await alicePage.getByRole("button", { name: "Delete board" }).click();
+  const confirmDelete = alicePage.getByRole("button", { name: "Delete this board" });
+  await expect(confirmDelete).toBeDisabled();
+  await alicePage.getByRole("textbox").last().fill("Doomed");
+  await confirmDelete.click();
+  await expect(alicePage.getByText("You are not on any board yet")).toBeVisible();
+
+  await bobPage.reload();
+  await expect(bobPage.getByRole("heading", { name: "Board not found" })).toBeVisible();
+});

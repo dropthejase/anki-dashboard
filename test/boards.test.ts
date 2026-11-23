@@ -21,6 +21,7 @@ describe("authorisation matrix", () => {
     ["POST", `/api/boards/${b}/members/${t}/role`, { role: "admin" }],
     ["DELETE", `/api/boards/${b}/members/${t}`],
     ["POST", `/api/boards/${b}/leave`],
+    ["POST", `/api/boards/${b}/delete`, { confirm: "Study group" }],
   ];
 
   it("hides every board route from non-members, identically to a missing board", async () => {
@@ -176,6 +177,23 @@ describe("admin rules", () => {
     expect((await db().prepare("SELECT COUNT(*) AS n FROM boards").first<{ n: number }>())?.n).toBe(0);
   });
 
+  it("survives two admins removing each other at once", async () => {
+    const { admin, member, board } = await setup();
+    await call("POST", `/api/boards/${board.id}/members/${member.id}/role`, { cookie: admin.cookie, body: { role: "admin" } });
+    await Promise.all([
+      call("DELETE", `/api/boards/${board.id}/members/${member.id}`, { cookie: admin.cookie }),
+      call("DELETE", `/api/boards/${board.id}/members/${admin.id}`, { cookie: member.cookie }),
+    ]);
+    const n = await db().prepare("SELECT COUNT(*) AS n FROM memberships WHERE board_id = ? AND role = 'admin'").bind(board.id).first<{ n: number }>();
+    expect(n?.n).toBe(1);
+  });
+
+  it("admins can remove another admin while one admin remains", async () => {
+    const { admin, member, board } = await setup();
+    await call("POST", `/api/boards/${board.id}/members/${member.id}/role`, { cookie: admin.cookie, body: { role: "admin" } });
+    expect((await call("DELETE", `/api/boards/${board.id}/members/${member.id}`, { cookie: admin.cookie })).status).toBe(200);
+  });
+
   it("admins cannot kick themselves", async () => {
     const { admin, board } = await setup();
     expect((await call("DELETE", `/api/boards/${board.id}/members/${admin.id}`, { cookie: admin.cookie })).data.error).toBe("use_leave");
@@ -235,5 +253,49 @@ describe("leaderboard", () => {
     const { admin } = await setup();
     expect((await call("GET", "/api/boards/..%2Fadmin", { cookie: admin.cookie })).status).toBe(404);
     expect((await call("GET", "/api/boards/' OR 1=1 --", { cookie: admin.cookie })).status).toBe(404);
+  });
+});
+
+describe("deleting a board", () => {
+  const del = (boardId: string, cookie: string, confirm: unknown) =>
+    call("POST", `/api/boards/${boardId}/delete`, { cookie, body: { confirm } });
+
+  it("lets an admin delete it, removing it for every member but keeping their accounts and stats", async () => {
+    const { admin, member, board } = await setup();
+    await pushStats(member, 30);
+    expect((await del(board.id, admin.cookie, "Study group")).status).toBe(200);
+    expect((await call("GET", `/api/boards/${board.id}`, { cookie: member.cookie })).status).toBe(404);
+    expect((await call("GET", "/api/me", { cookie: member.cookie })).data.boards).toEqual([]);
+    expect((await db().prepare("SELECT COUNT(*) AS n FROM memberships").first<{ n: number }>())?.n).toBe(0);
+    expect((await db().prepare("SELECT COUNT(*) AS n FROM users").first<{ n: number }>())?.n).toBe(3);
+    expect((await db().prepare("SELECT COUNT(*) AS n FROM daily_stats WHERE user_id = ?").bind(member.id).first<{ n: number }>())?.n).toBe(1);
+  });
+
+  it("needs the exact board name as confirmation", async () => {
+    const { admin, board } = await setup();
+    for (const confirm of [undefined, "", "study group", "Study group ", 5]) {
+      expect((await del(board.id, admin.cookie, confirm)).status, String(confirm)).toBe(400);
+    }
+    expect((await call("GET", `/api/boards/${board.id}`, { cookie: admin.cookie })).status).toBe(200);
+  });
+
+  it("is refused for members and hidden from non-members", async () => {
+    const { member, outsider, board } = await setup();
+    expect((await del(board.id, member.cookie, "Study group")).status).toBe(403);
+    expect((await del(board.id, outsider.cookie, "Study group")).status).toBe(404);
+    expect((await call("GET", `/api/boards/${board.id}`, { cookie: member.cookie })).status).toBe(200);
+  });
+
+  it("rejects a cross-origin request", async () => {
+    const { admin, board } = await setup();
+    const r = await call("POST", `/api/boards/${board.id}/delete`, { cookie: admin.cookie, origin: "https://evil.example", body: { confirm: "Study group" } });
+    expect(r.status).toBe(403);
+    expect((await call("GET", `/api/boards/${board.id}`, { cookie: admin.cookie })).status).toBe(200);
+  });
+
+  it("invalidates its invite link", async () => {
+    const { admin, board, outsider } = await setup();
+    await del(board.id, admin.cookie, "Study group");
+    expect((await joinBoard(outsider, board)).status).toBe(404);
   });
 });
