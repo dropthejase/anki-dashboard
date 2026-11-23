@@ -116,3 +116,44 @@ describe("MemberMenu", () => {
     expect(removed).toBe(1);
   });
 });
+
+describe("DeleteBoardDialog", () => {
+  it("only enables Delete once the exact name is typed", async () => {
+    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    const { fireEvent } = await import("@testing-library/react");
+    let closed = 0;
+    const confirmed: string[] = [];
+    render(<DeleteBoardDialog open boardName="Doomed" onClose={() => void closed++} onConfirm={async (t) => void confirmed.push(t)} />);
+    const dialog = screen.getByRole("dialog", { name: "Delete this board?" });
+    const button = within(dialog).getByRole("button", { name: "Delete board" });
+    expect(button).toBeDisabled();
+    fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "doomed" } });
+    expect(button).toBeDisabled();
+    fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Doomed" } });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    await screen.findByRole("dialog");
+    expect(confirmed).toEqual(["Doomed"]);
+    expect(closed).toBe(0);
+  });
+
+  it("closes on Escape and on a backdrop click", async () => {
+    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    const { fireEvent } = await import("@testing-library/react");
+    let closed = 0;
+    render(<DeleteBoardDialog open boardName="Doomed" onClose={() => void closed++} onConfirm={async () => {}} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(closed).toBe(1);
+    const backdrop = screen.getByRole("dialog").parentElement!;
+    fireEvent.mouseDown(backdrop);
+    expect(closed).toBe(2);
+    fireEvent.mouseDown(screen.getByRole("dialog"));
+    expect(closed).toBe(2);
+  });
+
+  it("renders nothing when closed", async () => {
+    const { DeleteBoardDialog } = await import("../src/components/DeleteBoardDialog");
+    render(<DeleteBoardDialog open={false} boardName="X" onClose={() => {}} onConfirm={async () => {}} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});

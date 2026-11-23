@@ -164,9 +164,10 @@ test("an admin deletes a board by typing its name, and members lose it", async (
 
   await alicePage.getByRole("button", { name: "Board settings" }).click();
   await alicePage.getByRole("button", { name: "Delete board" }).click();
-  const confirmDelete = alicePage.getByRole("button", { name: "Delete this board" });
+  const dialog = alicePage.getByRole("dialog", { name: "Delete this board?" });
+  const confirmDelete = dialog.getByRole("button", { name: "Delete board" });
   await expect(confirmDelete).toBeDisabled();
-  await alicePage.getByRole("textbox").last().fill("Doomed");
+  await dialog.getByRole("textbox").fill("Doomed");
   await confirmDelete.click();
   await expect(alicePage.getByText("You are not on any board yet")).toBeVisible();
 
