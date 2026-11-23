@@ -44,3 +44,18 @@ body {
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+
+@keyframes crown-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-1.5px) rotate(-8deg); }
+}
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.crown { animation: crown-bob 2.4s ease-in-out infinite; transform-origin: 50% 100%; }
+.crown-badge:hover .crown { animation-duration: 0.5s; }
+.row-in { animation: row-in 0.4s ease-out both; animation-delay: calc(var(--i, 0) * 50ms); }
+@media (prefers-reduced-motion: reduce) {
+  .crown, .row-in { animation: none; }
+}

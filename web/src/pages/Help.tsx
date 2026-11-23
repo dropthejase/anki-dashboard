@@ -73,8 +73,8 @@ export function Help() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p>
-            Your phone cannot send reviews to the leaderboard. Only Anki on your computer can. Your phone reviews still count, but they show up after
-            you sync in this order:
+            Your phone cannot send reviews to the leaderboard. Only Anki on your computer can. Your phone reviews still count, but only if you sync in this
+            order on the same day:
           </p>
           <Flow
             label="How phone reviews reach the leaderboard"

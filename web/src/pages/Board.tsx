@@ -2,6 +2,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
+import { BoardStats } from "../components/BoardStats";
 import { InvitePanel } from "../components/InvitePanel";
 import { Leaderboard, LeaderboardSkeleton } from "../components/Leaderboard";
 import { Button } from "../components/ui/button";
@@ -64,15 +65,15 @@ export function Board({ id }: { id: string }) {
   const isAdmin = view?.role === "admin";
   const memberActions = (m: Member) =>
     isAdmin && !m.is_me ? (
-      <span className="inline-flex gap-1">
+      <span className="inline-flex gap-2">
         <Button
           size="sm"
-          variant="ghost"
+          variant="outline"
           onClick={() => act(() => api("POST", `/api/boards/${id}/members/${m.user_id}/role`, { role: m.role === "admin" ? "member" : "admin" }))}
         >
           {m.role === "admin" ? "Demote" : "Make admin"}
         </Button>
-        <ConfirmButton label="Remove" confirmLabel={`Remove ${m.display_name}?`} onConfirm={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))} />
+        <ConfirmButton variant="dangerOutline" label="Remove" confirmLabel={`Remove ${m.display_name}?`} onConfirm={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))} />
       </span>
     ) : null;
 
@@ -81,11 +82,12 @@ export function Board({ id }: { id: string }) {
       <div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}><ArrowLeft className="h-4 w-4" aria-hidden /> All boards</Button>
       </div>
+      {view && <BoardStats members={view.members} total={view.board.member_count} />}
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           <div>
             <CardTitle data-testid="board-name">{view ? view.board.name : "Loading…"}</CardTitle>
-            {view && <p className="text-sm text-muted-foreground">{view.board.member_count} members · cards reviewed</p>}
+            {view && <p className="text-sm text-muted-foreground">{view.board.member_count} {view.board.member_count === 1 ? "member" : "members"} · cards reviewed</p>}
           </div>
           <Button
             variant="outline"
@@ -101,7 +103,7 @@ export function Board({ id }: { id: string }) {
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
           {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} actions={isAdmin ? memberActions : undefined} />}
           <p className="mt-4 text-sm text-muted-foreground">
-            Counts update when each member syncs Anki Desktop. Reviews on a phone appear after their next desktop sync.
+            Counts update when each member syncs Anki Desktop. Phone reviews count only if the phone and then Anki Desktop are synced the same day.
           </p>
         </CardContent>
       </Card>
@@ -139,7 +141,7 @@ export function Board({ id }: { id: string }) {
   );
 }
 
-function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" }) {
+function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" | "dangerOutline" }) {
   const [asking, setAsking] = useState(false);
   if (!asking) return <Button size="sm" variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
   return (
@@ -158,7 +160,7 @@ function AdminSettings({ view, act }: { view: BoardView; act: (fn: () => Promise
   return (
     <Card>
       <CardHeader><CardTitle>Admin settings</CardTitle></CardHeader>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent className="flex flex-col gap-6">
         <form
           className="flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { name })); }}

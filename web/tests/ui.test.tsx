@@ -71,3 +71,27 @@ describe("Help page", () => {
     ]);
   });
 });
+
+describe("BoardStats", () => {
+  it("shows the caller's rank and how far behind the member above they are", async () => {
+    const { BoardStats } = await import("../src/components/BoardStats");
+    render(
+      <BoardStats
+        total={3}
+        members={[
+          m({ rank: 1, user_id: "a", display_name: "Ana", today: 50 }),
+          m({ rank: 2, user_id: "b", display_name: "Me", today: 30, is_me: true }),
+          m({ rank: 3, user_id: "c", display_name: "Cy", today: 10 }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("#2")).toBeInTheDocument();
+    expect(screen.getByText("20 cards behind Ana")).toBeInTheDocument();
+  });
+
+  it("renders nothing when the caller is not in the list", async () => {
+    const { BoardStats } = await import("../src/components/BoardStats");
+    const { container } = render(<BoardStats total={1} members={[m({})]} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});

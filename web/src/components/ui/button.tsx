@@ -11,6 +11,7 @@ const buttonVariants = cva(
         outline: "border border-border bg-card hover:bg-muted",
         ghost: "hover:bg-muted",
         danger: "bg-danger text-primary-foreground hover:opacity-90",
+        dangerOutline: "border border-danger/40 bg-card text-danger hover:bg-danger/10",
       },
       size: { default: "h-9 px-4", sm: "h-8 px-3", icon: "h-9 w-9" },
     },

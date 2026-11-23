@@ -103,7 +103,7 @@ All stored tokens (device secret, login links, sessions) are stored as hashes. A
 
 ## 11. Known limitations
 
-- Data capture is desktop-only. Mobile apps cannot run add-ons, so a phone-only day shows after Anki Desktop next syncs.
+- Data capture is desktop-only. Mobile apps cannot run add-ons, so a phone-only day shows after Anki Desktop next syncs. Only today's count is pushed, so phone reviews reach the board only if the phone and then Anki Desktop sync within the same Anki day. Reviews synced to Desktop after the day cutoff are never pushed.
 - Signing in on a new browser requires Anki Desktop.
 - Counts are client-reported and spoofable.
 - A person with two AnkiWeb accounts appears as two identities.
