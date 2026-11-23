@@ -56,6 +56,14 @@ class ServerError(Exception):
     pass
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """The server never redirects. Following one would forward the Authorization header (our identity secret)
+    to wherever it points, possibly over plain http, so any redirect is treated as an error instead."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
+        return None
+
+
 class HttpTransport:
     def __init__(self, base_url: str):
         u = urlparse(base_url)
@@ -64,6 +72,7 @@ class HttpTransport:
             raise ValueError("server_url must be https")
         self.base = base_url.rstrip("/")
         self._ctx = ssl.create_default_context()  # verifies certificates and hostnames
+        self._opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=self._ctx))
 
     def post(self, path: str, secret: str | None, body: dict) -> tuple[int, dict]:
         headers = {"Content-Type": "application/json"}
@@ -73,10 +82,11 @@ class HttpTransport:
             self.base + path, data=json.dumps(body).encode(), headers=headers, method="POST"
         )
         try:
-            with urllib.request.urlopen(req, timeout=10, context=self._ctx) as r:
-                status, raw = r.status, r.read(MAX_RESPONSE_BYTES + 1)
-        except urllib.error.HTTPError as e:
-            status, raw = e.code, e.read(MAX_RESPONSE_BYTES + 1)
+            try:
+                with self._opener.open(req, timeout=10) as r:
+                    status, raw = r.status, r.read(MAX_RESPONSE_BYTES + 1)
+            except urllib.error.HTTPError as e:
+                status, raw = e.code, e.read(MAX_RESPONSE_BYTES + 1)
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             raise ServerError("network") from e
         if len(raw) > MAX_RESPONSE_BYTES:

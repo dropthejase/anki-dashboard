@@ -28,7 +28,7 @@ Run all tests with `npm run test:all`, and the browser journeys with `npm run e2
 
 You deploy two things: a Worker that serves the API and the website, and a D1 database. Two secrets of your own are involved: one random key for signing invite links, and your Cloudflare login. Neither belongs in the repository.
 
-Generate the invite key once and keep it somewhere safe. Rotating it later invalidates every existing invite link.
+Generate the invite key once and keep it somewhere safe. It must be at least 32 characters, and the server refuses to run invites with a shorter one. Rotating it later invalidates every existing invite link.
 
 ```bash
 openssl rand -base64 32

@@ -1,4 +1,4 @@
-import { bearerSecret, requireDevice, requireSameOrigin, requireUser, SECRET_RE, SESSION_ABSOLUTE_MS, SESSION_COOKIE, sessionCookie, SESSION_TTL } from "./auth";
+import { bearerSecret, readCookie, requireDevice, requireSameOrigin, requireUser, SECRET_RE, SESSION_ABSOLUTE_MS, SESSION_COOKIE, sessionCookie, SESSION_TTL } from "./auth";
 import { randomId, randomToken, sha256Hex } from "./crypto";
 import { HttpError, json, notFound, readJson } from "./http";
 import { rateLimit } from "./ratelimit";
@@ -137,7 +137,7 @@ export async function consumeLoginLink(c: Ctx): Promise<Response> {
 
 export async function logout(c: Ctx): Promise<Response> {
   const user = await requireUser(c);
-  const raw = (c.req.headers.get("Cookie") ?? "").match(new RegExp(`${SESSION_COOKIE}=([^;]+)`))?.[1];
+  const raw = readCookie(c.req, SESSION_COOKIE);
   if (raw) await c.env.DB.prepare("DELETE FROM sessions WHERE id_hash = ? AND user_id = ?").bind(await sha256Hex(raw), user.id).run();
   return json({ ok: true }, 200, { "Set-Cookie": sessionCookie("", 0) });
 }

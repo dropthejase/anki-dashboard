@@ -1,4 +1,8 @@
+import { HttpError } from "./http";
+
 const enc = new TextEncoder();
+
+export const MIN_INVITE_KEY_LENGTH = 32;
 
 export function b64url(bytes: Uint8Array): string {
   let s = "";
@@ -30,6 +34,8 @@ async function hmacKey(secret: string): Promise<CryptoKey> {
 
 /** Invite token = HMAC(server secret, board_id + ":" + epoch). Computed on demand, never stored. */
 export async function inviteToken(secret: string, boardId: string, epoch: number): Promise<string> {
+  // Fail closed: a missing or short key would make every invite link guessable or forgeable.
+  if (typeof secret !== "string" || secret.length < MIN_INVITE_KEY_LENGTH) throw new HttpError(500, "server_misconfigured");
   const sig = await crypto.subtle.sign("HMAC", await hmacKey(secret), enc.encode(`${boardId}:${epoch}`));
   return b64url(new Uint8Array(sig));
 }
