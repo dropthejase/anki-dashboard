@@ -80,7 +80,7 @@ Open your URL. You should see the "Open the leaderboard from Anki" page. Then in
 Things worth knowing before you share it with others:
 
 - Free-plan limits are a hard stop, not a bill. See `docs/PRD.md` section 12 and re-check Cloudflare's current limits.
-- A daily cleanup job removes inactive accounts. Cron triggers on the free plan and D1 backup options are not yet verified (`docs/PRD.md` section 14).
+- A daily cleanup job (one cron trigger) removes inactive accounts. Cloudflare lists 5 cron triggers per account on the free plan, but this is not yet confirmed on a live account, and D1 backup options are not yet verified (`docs/PRD.md` section 14).
 - Do not move to a paid Workers plan without setting up usage alerts, because overage is billed.
 
 ## Install the Anki add-on
