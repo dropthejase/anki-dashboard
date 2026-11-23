@@ -1,6 +1,6 @@
 # ADR 0001: Identity and Authentication
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-24
 - Deciders: Project owner
 
@@ -29,7 +29,7 @@ The add-on is the identity provider. There is no third-party sign-in, no email, 
 - The collection config syncs through AnkiWeb, so the same AnkiWeb account yields the same identity on every machine. One AnkiWeb account maps to one leaderboard identity.
 - The server stores only a hash of the secret.
 - Each sync request carries the secret over HTTPS. The server hashes it to find the user.
-- Website sign-in starts in the add-on (Tools, Open Leaderboard). The add-on asks the server for a one-time sign-in link containing 128 random bits, valid for about two minutes and single use. The browser opens it and receives an `HttpOnly` session cookie. A QR code of the same link covers phone sign-in.
+- Website sign-in starts in the add-on (Tools, Open Leaderboard). The add-on asks the server for a one-time sign-in link containing 128 random bits, valid for about two minutes and single use. The browser opens it and receives an `HttpOnly` session cookie. A QR code of the same link was planned to cover phone sign-in (not built, see Implementation notes).
 - Roles (`admin` or `member`) are stored per board membership. Authorisation is checked server-side on every board request.
 - Recovery is AnkiWeb's own account recovery followed by a sync, which restores the secret to the collection.
 
@@ -54,6 +54,17 @@ Negative and accepted:
 - Collection config (`mw.col.conf`) syncs through AnkiWeb and is writable by add-ons. Forum guidance supports this, but the official reference has not been read. To be confirmed when the add-on is built.
 - The expected sync hook and thread-safety behaviour for reading the `revlog`.
 - Cognito, Supabase and Cloudflare pricing and limits cited above come from third-party summaries and search results and should be re-checked if those options are revisited.
+
+## Implementation notes
+
+Recorded 2026-11-23, after the first build.
+
+- Built as decided: the add-on creates the secret only after a finished sync and only if none exists, the server stores only the SHA-256 hash, and sign-in uses a one-time link.
+- The login token is 128 bits, valid 120 seconds and single use, and it travels in the URL fragment. The sign-in page shows "Sign in as <name>?" before consuming it, to prevent login CSRF.
+- The session cookie is `__Host-session` (`HttpOnly; Secure; SameSite=Strict`), 30 days sliding and 90 days at most.
+- Not built: the QR code for phone sign-in. The add-on only opens the link in the computer's browser, so signing in on a phone needs a separate step that does not exist yet.
+- Still unverified: that the collection config reaches a second computer through AnkiWeb sync. This needs two real Anki installs.
+- The add-on never follows redirects, so a redirect cannot forward the secret (threat T24).
 
 ## Future options
 

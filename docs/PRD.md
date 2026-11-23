@@ -1,6 +1,6 @@
 # Anki Leaderboard: Product Requirements
 
-Status: Draft v2. Supersedes the original prompt-style draft. Identity and authentication are specified in `docs/adr/0001-identity-and-authentication.md`; where this document and an ADR conflict, the ADR wins.
+Status: Historical reference. This is the requirements document the project started from. The system as built is described in `docs/ARCHITECTURE.md`, and where they differ the architecture document and the ADRs win. Identity and authentication are specified in `docs/adr/0001-identity-and-authentication.md`.
 
 ## 1. Overview
 
