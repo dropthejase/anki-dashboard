@@ -38,3 +38,7 @@ Built with a Cloudflare Worker and D1, React 19, Vite and Tailwind 4. Tests use 
 ## Security
 
 Authentication, invites and roles are described in the [threat model](docs/threat-model.md), including the risks that are accepted for now. To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
