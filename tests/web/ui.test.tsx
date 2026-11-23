@@ -65,6 +65,9 @@ describe("Help page", () => {
     const { Help } = await import("../../web/src/pages/Help");
     render(<Help />);
     expect(screen.getByRole("heading", { name: "Studying on your phone?" })).toBeInTheDocument();
+    const download = screen.getByRole("link", { name: /Download the add-on/ });
+    expect(download).toHaveAttribute("href", expect.stringContaining("/releases/latest"));
+    expect(download).toHaveAttribute("rel", "noopener noreferrer");
     const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
     expect(within(flow).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
       "Sync your phone", "AnkiWeb", "Sync Anki on your computer", "Leaderboard updates",

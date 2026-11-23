@@ -26,6 +26,12 @@ Out of scope:
 - Findings that need a compromised device, browser or Anki profile.
 - Automated scanner output with no demonstrated impact.
 
+## Data and privacy
+
+Each person's data is a display name, the number of cards reviewed per day, their board memberships and roles, and timestamps. No passwords, emails, AnkiWeb logins or card content are stored, and the identity secret is kept only as a hash. Members of a board see that board's names and counts. Nobody sees boards they are not in.
+
+Whoever runs a server can read everything stored in its database through their Cloudflare account. If you use someone else's server, they can see your display name and counts. The default display name is your Anki profile name, which you can change on the Account page. Inactive accounts are deleted after 12 months, and you can delete your account at any time.
+
 ## Running your own copy
 
 If you self-host this, you are responsible for your own deployment. Keep `INVITE_HMAC_KEY` secret and never reuse the local development key, keep Wrangler and your dependencies up to date, and review `docs/INSTALL.md` before sharing the address with others.
