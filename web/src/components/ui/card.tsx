@@ -11,5 +11,5 @@ export const CardTitle = ({ className, ...p }: React.HTMLAttributes<HTMLHeadingE
   <h2 className={cn("text-lg font-semibold tracking-tight", className)} {...p} />
 );
 export const CardContent = ({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("p-5 pt-2", className)} {...p} />
+  <div className={cn("p-5 pt-2 text-sm", className)} {...p} />
 );

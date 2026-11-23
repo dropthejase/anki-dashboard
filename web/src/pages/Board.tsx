@@ -56,7 +56,7 @@ export function Board({ id }: { id: string }) {
     return (
       <Card>
         <CardHeader><CardTitle>Board not found</CardTitle></CardHeader>
-        <CardContent className="text-sm">This board does not exist, or you are not a member. If you were invited, open the invite link again.</CardContent>
+        <CardContent>This board does not exist, or you are not a member. If you were invited, open the invite link again.</CardContent>
       </Card>
     );
   }
@@ -100,7 +100,7 @@ export function Board({ id }: { id: string }) {
         <CardContent>
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
           {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} actions={isAdmin ? memberActions : undefined} />}
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             Counts update when each member syncs Anki Desktop. Reviews on a phone appear after their next desktop sync.
           </p>
         </CardContent>
@@ -121,6 +121,7 @@ export function Board({ id }: { id: string }) {
         <div>
           <ConfirmButton
             label="Leave board"
+            variant="danger"
             confirmLabel="Leave this board?"
             onConfirm={async () => {
               try {
@@ -138,12 +139,12 @@ export function Board({ id }: { id: string }) {
   );
 }
 
-function ConfirmButton({ label, confirmLabel, onConfirm }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void> }) {
+function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <Button size="sm" variant="ghost" onClick={() => setAsking(true)}>{label}</Button>;
+  if (!asking) return <Button size="sm" variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
   return (
     <span className="inline-flex items-center gap-1">
-      <span className="text-xs text-muted-foreground">{confirmLabel}</span>
+      <span className="text-sm text-muted-foreground">{confirmLabel}</span>
       <Button size="sm" variant="danger" onClick={async () => { await onConfirm(); setAsking(false); }}>Yes</Button>
       <Button size="sm" variant="ghost" onClick={() => setAsking(false)}>No</Button>
     </span>

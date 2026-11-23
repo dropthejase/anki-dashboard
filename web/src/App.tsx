@@ -7,6 +7,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { navigate, usePath } from "./lib/router";
 import { Board } from "./pages/Board";
 import { Home } from "./pages/Home";
+import { Help } from "./pages/Help";
 import { Join } from "./pages/Join";
 import { SignIn } from "./pages/SignIn";
 
@@ -39,6 +40,7 @@ export function App() {
   const boardId = /^\/b\/([0-9a-f]{32})$/.exec(path)?.[1];
   let page;
   if (path === "/signin") page = <SignIn />;
+  else if (path === "/help") page = <Help />;
   else if (loading) page = <Skeleton className="h-40 w-full" />;
   else if (path === "/join") page = <Join />;
   else if (boardId) page = <Board id={boardId} />;
@@ -53,6 +55,7 @@ export function App() {
             Anki Leaderboard
           </a>
           <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/help")}>Help</Button>
             {me && (
               <>
                 <span className="mr-2 hidden text-sm text-muted-foreground sm:inline" data-testid="whoami">

@@ -59,3 +59,15 @@ describe("timeAgo", () => {
     expect(timeAgo(now - 3 * 3_600_000, now)).toBe("3 h ago");
   });
 });
+
+describe("Help page", () => {
+  it("explains the phone-to-desktop sync order", async () => {
+    const { Help } = await import("../src/pages/Help");
+    render(<Help />);
+    expect(screen.getByRole("heading", { name: "Studying on your phone?" })).toBeInTheDocument();
+    const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
+    expect(within(flow).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Sync your phone", "AnkiWeb", "Sync Anki on your computer", "Leaderboard updates",
+    ]);
+  });
+});
