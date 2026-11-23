@@ -1,9 +1,11 @@
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Settings } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
+import { BoardStats } from "../components/BoardStats";
 import { InvitePanel } from "../components/InvitePanel";
 import { Leaderboard, LeaderboardSkeleton } from "../components/Leaderboard";
+import { MemberMenu } from "../components/MemberMenu";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -19,6 +21,7 @@ export function Board({ id }: { id: string }) {
   const [error, setError] = useState("");
   const [cooling, setCooling] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,7 +59,7 @@ export function Board({ id }: { id: string }) {
     return (
       <Card>
         <CardHeader><CardTitle>Board not found</CardTitle></CardHeader>
-        <CardContent className="text-sm">This board does not exist, or you are not a member. If you were invited, open the invite link again.</CardContent>
+        <CardContent>This board does not exist, or you are not a member. If you were invited, open the invite link again.</CardContent>
       </Card>
     );
   }
@@ -64,16 +67,11 @@ export function Board({ id }: { id: string }) {
   const isAdmin = view?.role === "admin";
   const memberActions = (m: Member) =>
     isAdmin && !m.is_me ? (
-      <span className="inline-flex gap-1">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => act(() => api("POST", `/api/boards/${id}/members/${m.user_id}/role`, { role: m.role === "admin" ? "member" : "admin" }))}
-        >
-          {m.role === "admin" ? "Demote" : "Make admin"}
-        </Button>
-        <ConfirmButton label="Remove" confirmLabel={`Remove ${m.display_name}?`} onConfirm={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))} />
-      </span>
+      <MemberMenu
+        member={m}
+        onToggleRole={() => act(() => api("POST", `/api/boards/${id}/members/${m.user_id}/role`, { role: m.role === "admin" ? "member" : "admin" }))}
+        onRemove={() => act(() => api("DELETE", `/api/boards/${id}/members/${m.user_id}`))}
+      />
     ) : null;
 
   return (
@@ -81,27 +79,35 @@ export function Board({ id }: { id: string }) {
       <div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}><ArrowLeft className="h-4 w-4" aria-hidden /> All boards</Button>
       </div>
+      {view && <BoardStats members={view.members} total={view.board.member_count} />}
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           <div>
             <CardTitle data-testid="board-name">{view ? view.board.name : "Loading…"}</CardTitle>
-            {view && <p className="text-sm text-muted-foreground">{view.board.member_count} members · cards reviewed</p>}
+            {view && <p className="text-sm text-muted-foreground">{view.board.member_count} {view.board.member_count === 1 ? "member" : "members"} · cards reviewed</p>}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={loading || cooling}
-            onClick={() => void load()}
-            title="Refresh (limited to once every few seconds)"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button variant="outline" size="sm" aria-expanded={showSettings} onClick={() => setShowSettings((v) => !v)}>
+                <Settings className="h-3.5 w-3.5" aria-hidden /> Board settings
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || cooling}
+              onClick={() => void load()}
+              title="Refresh (limited to once every few seconds)"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden /> Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
           {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} actions={isAdmin ? memberActions : undefined} />}
-          <p className="mt-3 text-xs text-muted-foreground">
-            Counts update when each member syncs Anki Desktop. Reviews on a phone appear after their next desktop sync.
+          <p className="mt-4 text-sm text-muted-foreground">
+            Counts update when each member syncs Anki Desktop. Phone reviews count only if the phone and then Anki Desktop are synced the same day.
           </p>
         </CardContent>
       </Card>
@@ -115,12 +121,13 @@ export function Board({ id }: { id: string }) {
         </Card>
       )}
 
-      {view && isAdmin && <AdminSettings view={view} act={act} />}
+      {view && isAdmin && showSettings && <AdminSettings view={view} act={act} />}
 
       {view && (
         <div>
           <ConfirmButton
             label="Leave board"
+            variant="danger"
             confirmLabel="Leave this board?"
             onConfirm={async () => {
               try {
@@ -138,12 +145,12 @@ export function Board({ id }: { id: string }) {
   );
 }
 
-function ConfirmButton({ label, confirmLabel, onConfirm }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void> }) {
+function ConfirmButton({ label, confirmLabel, onConfirm, variant = "ghost" }: { label: string; confirmLabel: string; onConfirm: () => void | Promise<void>; variant?: "ghost" | "danger" }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <Button size="sm" variant="ghost" onClick={() => setAsking(true)}>{label}</Button>;
+  if (!asking) return <Button size="sm" variant={variant} onClick={() => setAsking(true)}>{label}</Button>;
   return (
     <span className="inline-flex items-center gap-1">
-      <span className="text-xs text-muted-foreground">{confirmLabel}</span>
+      <span className="text-sm text-muted-foreground">{confirmLabel}</span>
       <Button size="sm" variant="danger" onClick={async () => { await onConfirm(); setAsking(false); }}>Yes</Button>
       <Button size="sm" variant="ghost" onClick={() => setAsking(false)}>No</Button>
     </span>
@@ -157,7 +164,7 @@ function AdminSettings({ view, act }: { view: BoardView; act: (fn: () => Promise
   return (
     <Card>
       <CardHeader><CardTitle>Admin settings</CardTitle></CardHeader>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent className="flex flex-col gap-6">
         <form
           className="flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { name })); }}

@@ -19,7 +19,7 @@ describe("Leaderboard", () => {
     expect(screen.getByLabelText("1st place")).toBeInTheDocument();
     expect(screen.getByLabelText("3rd place")).toBeInTheDocument();
     expect(screen.queryByLabelText("4th place")).toBeNull();
-    expect(within(screen.getAllByTestId("member-row")[3]!).getByText("You")).toBeInTheDocument();
+    expect(within(screen.getAllByTestId("member-row")[3]!).getByText("(you)")).toBeInTheDocument();
   });
 
   it("renders hostile names as text, never as markup", () => {
@@ -57,5 +57,62 @@ describe("timeAgo", () => {
     expect(timeAgo(now - 30_000, now)).toBe("just now");
     expect(timeAgo(now - 5 * 60_000, now)).toBe("5 min ago");
     expect(timeAgo(now - 3 * 3_600_000, now)).toBe("3 h ago");
+  });
+});
+
+describe("Help page", () => {
+  it("explains the phone-to-desktop sync order", async () => {
+    const { Help } = await import("../src/pages/Help");
+    render(<Help />);
+    expect(screen.getByRole("heading", { name: "Studying on your phone?" })).toBeInTheDocument();
+    const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
+    expect(within(flow).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Sync your phone", "AnkiWeb", "Sync Anki on your computer", "Leaderboard updates",
+    ]);
+  });
+});
+
+describe("BoardStats", () => {
+  it("shows the caller's rank and how far behind the member above they are", async () => {
+    const { BoardStats } = await import("../src/components/BoardStats");
+    render(
+      <BoardStats
+        total={3}
+        members={[
+          m({ rank: 1, user_id: "a", display_name: "Ana", today: 50 }),
+          m({ rank: 2, user_id: "b", display_name: "Me", today: 30, is_me: true }),
+          m({ rank: 3, user_id: "c", display_name: "Cy", today: 10 }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("#2")).toBeInTheDocument();
+    expect(screen.getByText("20 cards behind Ana")).toBeInTheDocument();
+  });
+
+  it("renders nothing when the caller is not in the list", async () => {
+    const { BoardStats } = await import("../src/components/BoardStats");
+    const { container } = render(<BoardStats total={1} members={[m({})]} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("MemberMenu", () => {
+  it("opens, toggles the role, and needs a confirmation to remove", async () => {
+    const { MemberMenu } = await import("../src/components/MemberMenu");
+    const { fireEvent } = await import("@testing-library/react");
+    let role = 0;
+    let removed = 0;
+    render(<MemberMenu member={m({ display_name: "Bo" })} onToggleRole={() => void role++} onRemove={() => void removed++} />);
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Bo" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Make admin" }));
+    expect(role).toBe(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Bo" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Remove from board" }));
+    expect(removed).toBe(0);
+    fireEvent.click(within(screen.getByRole("menu")).getByRole("button", { name: "Remove" }));
+    expect(removed).toBe(1);
   });
 });
