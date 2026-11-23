@@ -17,7 +17,9 @@ export class FakeAnki {
   }
 
   async register() {
-    const r = await this.request.post("/api/register", { headers: this.headers(), data: { display_name: this.name } });
+    // Each fake Anki registers from its own address, as separate people would, so the per-IP registration limit stays out of the way.
+    const ip = `198.51.100.${(randomBytes(1)[0]! % 250) + 1}`;
+    const r = await this.request.post("/api/register", { headers: { ...this.headers(), "CF-Connecting-IP": ip }, data: { display_name: this.name } });
     if (!r.ok()) throw new Error(`register failed: ${r.status()}`);
   }
 
