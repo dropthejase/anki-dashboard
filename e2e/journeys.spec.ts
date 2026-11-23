@@ -141,6 +141,8 @@ test("security headers and rendering of hostile names", async ({ browser, reques
 test("account deletion removes the user and signs them out", async ({ browser, request }) => {
   const dana = await newUser(request, "Dana", 5);
   const page = await signedIn(browser, dana);
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "Account" }).click();
   await page.getByRole("button", { name: "Delete my account" }).click();
   await page.getByRole("button", { name: "Yes, delete everything" }).click();
   await expect(page.getByRole("heading", { name: "Open the leaderboard from Anki" })).toBeVisible();
