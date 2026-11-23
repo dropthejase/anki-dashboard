@@ -103,9 +103,9 @@ Static assets get a strict Content Security Policy (`default-src 'none'`, script
 ## Not yet verified
 
 - That the collection config really reaches a second computer through AnkiWeb (needs two Anki installs). If it does not, a recovery code is the planned fallback.
-- Cron triggers on the free plan (Cloudflare's limits page lists five per account and we use one), D1 backup and restore options, and AnkiWeb upload eligibility and multi-factor support for the publishing account.
+- The daily cron. Its schedule registered on the free plan at the first deploy, but the first scheduled run has not been observed yet. Also D1 backup and restore options, and AnkiWeb upload eligibility and multi-factor support for the publishing account.
 - The add-on has run only against fakes and a local Worker, never inside a live Anki release.
-- The deployment steps in `docs/INSTALL.md` have not been run on a live account.
+- The dashboard route (Option B) in `docs/INSTALL.md`. The command-line route (Option A) was run on a live account on 2026-11-23, followed by a smoke test of registration, sync, sign-in, boards, invites and account deletion.
 
 ## Open decisions
 
