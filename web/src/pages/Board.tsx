@@ -145,7 +145,8 @@ export function Board({ id }: { id: string }) {
         <div>
           <ConfirmButton
             label="Leave board"
-            variant="danger"
+            variant="outline"
+            size="default"
             confirmLabel={view.board.member_count === 1 ? "You are the last member, so this deletes the board. Leave?" : "Leave this board?"}
             onConfirm={async () => {
               try {
