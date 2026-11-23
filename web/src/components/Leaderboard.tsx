@@ -28,7 +28,7 @@ export function Leaderboard({ members, actions }: { members: Member[]; actions?:
             <th className="py-2 pr-2 font-medium">#</th>
             <th className="py-2 pr-2 font-medium">Member</th>
             <th className="py-2 pr-2 text-right font-medium">Today</th>
-            <th className="py-2 pr-2 text-right font-medium">7 days</th>
+            <th className="whitespace-nowrap py-2 pr-2 text-right font-medium">7 days</th>
             {actions && <th className="py-2 text-right font-medium"><span className="sr-only">Actions</span></th>}
           </tr>
         </thead>
