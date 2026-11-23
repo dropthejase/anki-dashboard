@@ -4,6 +4,7 @@ import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
 import { InvitePanel } from "../components/InvitePanel";
+import { DeleteBoardDialog } from "../components/DeleteBoardDialog";
 import { Leaderboard, LeaderboardSkeleton } from "../components/Leaderboard";
 import { MemberMenu } from "../components/MemberMenu";
 import { Button } from "../components/ui/button";
@@ -179,8 +180,6 @@ function AdminSettings({ view, act, onDeleted }: { view: BoardView; act: (fn: ()
   const [name, setName] = useState(view.board.name);
   const [cap, setCap] = useState(view.board.member_cap?.toString() ?? "");
   const [deleting, setDeleting] = useState(false);
-  const [typed, setTyped] = useState("");
-  const [deleteError, setDeleteError] = useState("");
   return (
     <Card>
       <CardHeader><CardTitle>Admin settings</CardTitle></CardHeader>
@@ -212,41 +211,20 @@ function AdminSettings({ view, act, onDeleted }: { view: BoardView; act: (fn: ()
         {!view.board.invite_enabled && <p className="text-sm text-muted-foreground">The invite link is off. Nobody can join with it.</p>}
         <div className="flex flex-col gap-3 rounded-lg border border-danger/40 p-4">
           <p className="font-medium text-danger">Delete this board</p>
-          <p className="text-muted-foreground">
-            This removes the board and its invite link for every member. Everyone keeps their account and review history. It cannot be undone.
-          </p>
-          {!deleting ? (
-            <Button variant="danger" className="self-start" onClick={() => setDeleting(true)}>
-              <Trash2 className="h-4 w-4" aria-hidden /> Delete board
-            </Button>
-          ) : (
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setDeleteError("");
-                try {
-                  await api("POST", `/api/boards/${id}/delete`, { confirm: typed });
-                  await onDeleted();
-                } catch (err) {
-                  setDeleteError(errorText(err));
-                }
-              }}
-            >
-              <label className="flex flex-col gap-2">
-                <span>
-                  Type <strong>{view.board.name}</strong> to confirm
-                </span>
-                <Input value={typed} maxLength={60} autoComplete="off" onChange={(e) => setTyped(e.target.value)} />
-              </label>
-              {deleteError && <p role="alert" className="text-danger">{deleteError}</p>}
-              <div className="flex gap-2">
-                <Button type="submit" variant="danger" disabled={typed !== view.board.name}>Delete this board</Button>
-                <Button type="button" variant="ghost" onClick={() => { setDeleting(false); setTyped(""); setDeleteError(""); }}>Cancel</Button>
-              </div>
-            </form>
-          )}
+          <p className="text-muted-foreground">Removes the board for every member. Accounts and review history are kept. It cannot be undone.</p>
+          <Button variant="danger" className="self-start" onClick={() => setDeleting(true)}>
+            <Trash2 className="h-4 w-4" aria-hidden /> Delete board
+          </Button>
         </div>
+        <DeleteBoardDialog
+          open={deleting}
+          boardName={view.board.name}
+          onClose={() => setDeleting(false)}
+          onConfirm={async (typed) => {
+            await api("POST", `/api/boards/${id}/delete`, { confirm: typed });
+            await onDeleted();
+          }}
+        />
       </CardContent>
     </Card>
   );
