@@ -94,6 +94,7 @@ Static assets get a strict Content Security Policy (`default-src 'none'`, script
 - Review capture needs Anki Desktop, because phones cannot run add-ons. Phone reviews count only if the phone and then Anki Desktop sync within the same Anki day, since only today's count is pushed.
 - Signing in on a new browser needs Anki Desktop open.
 - Counts are client-reported and can be faked within the daily cap.
+- Whoever runs a server can read its whole database (display names, board names, counts) through their Cloudflare account.
 - The identity secret is visible to AnkiWeb, to backups of the collection and to other add-ons on the machine.
 - A person with two AnkiWeb accounts appears as two identities, with no merging.
 - Admins are equals with no board owner, so any admin can demote, remove or delete another admin's board, including the creator's.

@@ -1,6 +1,8 @@
-import { ArrowDown, ArrowRight, Cloud, Link2, Monitor, RefreshCw, Smartphone, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, RefreshCw, Smartphone, Trophy, type LucideIcon } from "lucide-react";
 import { Fragment } from "react";
+import { buttonVariants } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { ADDON_DOWNLOAD_URL, INSTALL_GUIDE_URL } from "../lib/links";
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -10,7 +12,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
       </span>
       <div className="flex flex-col gap-1">
         <h3 className="font-medium">{title}</h3>
-        <p className="text-muted-foreground">{children}</p>
+        <div className="space-y-3 text-muted-foreground">{children}</div>
       </div>
     </li>
   );
@@ -52,7 +54,19 @@ export function Help() {
         <CardContent>
           <ol className="flex flex-col gap-5">
             <Step n={1} title="Install the add-on">
-              In Anki on your computer, add the Anki Leaderboard add-on.
+              <p>
+                Download the add-on file. Then, in Anki on your computer, choose{" "}
+                <strong className="text-foreground">Tools → Add-ons → Install from file…</strong>, pick the downloaded file
+                (it ends in <code className="rounded bg-muted px-1 py-0.5 text-foreground">.ankiaddon</code>) and restart Anki.
+              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <a href={ADDON_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  <Download className="h-4 w-4" aria-hidden /> Download the add-on
+                </a>
+                <a href={INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent hover:underline">
+                  Running your own server? See the install guide
+                </a>
+              </div>
             </Step>
             <Step n={2} title="Sync Anki">
               Press Sync in Anki. This links you to the leaderboard. There is no password to set.
