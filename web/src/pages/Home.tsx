@@ -91,7 +91,7 @@ export function Home() {
 
       <section aria-label="Create a board">
         <SectionLabel>Create a board</SectionLabel>
-        <form onSubmit={create} className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-4 sm:flex-row">
+        <form onSubmit={create} className="flex flex-col gap-3 rounded-xl bg-muted p-4 sm:flex-row">
           <Input aria-label="Board name" placeholder="e.g. SQE1 study group" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} required />
           <Button type="submit" disabled={busy} className="sm:w-28 sm:shrink-0">
             <Plus className="h-4 w-4" aria-hidden /> Create
