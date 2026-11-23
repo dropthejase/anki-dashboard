@@ -104,7 +104,7 @@ export function Help() {
                 this address if it is not already, and click OK:
               </p>
               <CopyField label="Server address" value={location.origin} />
-              <Screenshot src={addonConfig} alt="The add-on's Config window with the server_url value highlighted" width={1000} height={869} maxWidth={440} />
+              <Screenshot src={addonConfig} alt="The add-on's Config window with the server_url value highlighted" width={672} height={188} maxWidth={600} />
             </Step>
             <Step n={4} title="Sync Anki">
               Press Sync in Anki. This links you to the leaderboard. There is no password to set.
