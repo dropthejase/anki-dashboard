@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, RefreshCw, Smartphone, Trophy, type LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import { buttonVariants } from "../components/ui/button";
+import { CopyField } from "../components/CopyField";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { ADDON_DOWNLOAD_URL, INSTALL_GUIDE_URL } from "../lib/links";
 
@@ -50,6 +51,14 @@ export function Help() {
       <Card>
         <CardHeader>
           <CardTitle>Get started</CardTitle>
+          <a
+            href={INSTALL_GUIDE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Running your own server? See the install guide
+          </a>
         </CardHeader>
         <CardContent>
           <ol className="flex flex-col gap-5">
@@ -59,22 +68,25 @@ export function Help() {
                 <strong className="text-foreground">Tools → Add-ons → Install from file…</strong>, pick the downloaded file
                 (it ends in <code className="rounded bg-muted px-1 py-0.5 text-foreground">.ankiaddon</code>) and restart Anki.
               </p>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <a href={ADDON_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                  <Download className="h-4 w-4" aria-hidden /> Download the add-on
-                </a>
-                <a href={INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-accent hover:underline">
-                  Running your own server? See the install guide
-                </a>
-              </div>
+              <a href={ADDON_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants()}>
+                <Download className="h-4 w-4" aria-hidden /> Download the add-on
+              </a>
             </Step>
-            <Step n={2} title="Sync Anki">
+            <Step n={2} title="Point the add-on at this site">
+              <p>
+                In Anki choose <strong className="text-foreground">Tools → Add-ons</strong>, select <strong className="text-foreground">Anki Leaderboard</strong>,
+                then <strong className="text-foreground">Config</strong>. Set <code className="rounded bg-muted px-1 py-0.5 text-foreground">server_url</code> to
+                this address if it is not already, and save:
+              </p>
+              <CopyField label="Server address" value={location.origin} />
+            </Step>
+            <Step n={3} title="Sync Anki">
               Press Sync in Anki. This links you to the leaderboard. There is no password to set.
             </Step>
-            <Step n={3} title="Open the leaderboard">
+            <Step n={4} title="Open the leaderboard">
               In Anki, choose <strong className="text-foreground">Tools → Open Leaderboard</strong>. Your browser opens and signs you in.
             </Step>
-            <Step n={4} title="Make or join a board">
+            <Step n={5} title="Make or join a board">
               Create a board and share its invite link. Or open a friend&apos;s invite link to join theirs.
             </Step>
           </ol>
