@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
+import { RankTabs, type RankBy } from "../components/RankTabs";
 import { InvitePanel } from "../components/InvitePanel";
 import { BoardPicture } from "../components/BoardPicture";
 import { PictureEditor } from "../components/PictureEditor";
@@ -26,12 +27,19 @@ export function Board({ id }: { id: string }) {
   const [cooling, setCooling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [by, setBy] = useState<RankBy>(() => {
+    try {
+      return localStorage.getItem("rank-by") === "week" ? "week" : "today";
+    } catch {
+      return "today";
+    }
+  });
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setView(await api<BoardView>("GET", `/api/boards/${id}?date=${localDate()}`));
+      setView(await api<BoardView>("GET", `/api/boards/${id}?date=${localDate()}&by=${by}`));
       setError("");
       setCooling(true);
     } catch (e) {
@@ -40,7 +48,7 @@ export function Board({ id }: { id: string }) {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, by]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -89,7 +97,7 @@ export function Board({ id }: { id: string }) {
       <div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}><ArrowLeft className="h-4 w-4" aria-hidden /> All boards</Button>
       </div>
-      {view && <BoardStats members={view.members} total={view.board.member_count} />}
+      {view && <BoardStats members={view.members} total={view.board.member_count} by={by} />}
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           {view && <BoardPicture boardId={view.board.id} name={view.board.name} version={view.board.image_version} className="h-14 w-14" />}
@@ -129,7 +137,18 @@ export function Board({ id }: { id: string }) {
         </CardHeader>
         <CardContent>
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
-          {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} actions={isAdmin ? memberActions : undefined} />}
+          <RankTabs
+            value={by}
+            onChange={(next) => {
+              setBy(next);
+              try {
+                localStorage.setItem("rank-by", next);
+              } catch {
+                // ignore
+              }
+            }}
+          />
+          {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} by={by} actions={isAdmin ? memberActions : undefined} />}
           <p className="mt-4 text-sm text-muted-foreground">
             Counts update when each member syncs Anki Desktop. Phone reviews count only if the phone and then Anki Desktop are synced the same day.
           </p>

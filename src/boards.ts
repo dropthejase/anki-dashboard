@@ -72,9 +72,13 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
     throw new HttpError(400, "invalid_date");
   }
   const date = requested ?? utcDate(c.now);
+  // Which count the board is ranked by. Only these two fixed strings ever reach the query.
+  const by = c.url.searchParams.get("by") ?? "today";
+  if (by !== "today" && by !== "week") throw new HttpError(400, "invalid_by");
+  const order = by === "week" ? "week DESC, today DESC, display_name" : "today DESC, week DESC, display_name";
   const members = await c.env.DB.prepare(
     `SELECT * FROM (
-       SELECT ROW_NUMBER() OVER (ORDER BY today DESC, week DESC, display_name) AS rank, * FROM (
+       SELECT ROW_NUMBER() OVER (ORDER BY ${order}) AS rank, * FROM (
          SELECT u.id AS user_id, u.display_name, m.role, m.joined_at,
                 COALESCE(SUM(CASE WHEN d.local_date = ?2 THEN d.review_count END), 0) AS today,
                 COALESCE(SUM(d.review_count), 0) AS week,

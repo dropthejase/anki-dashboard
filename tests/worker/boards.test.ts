@@ -236,6 +236,21 @@ describe("leaderboard", () => {
     ]);
   });
 
+  it("ranks by the 7-day total when asked, and rejects any other value", async () => {
+    const { admin, member, board } = await setup();
+    const day = (offset: number) => new Date(Date.now() - offset * 86_400_000).toISOString().slice(0, 10);
+    await db().prepare("INSERT INTO daily_stats (user_id, local_date, review_count, updated_at) VALUES (?, ?, 100, ?)").bind(admin.id, day(3), Date.now()).run();
+    await pushStats(admin, 30, day(0));
+    await pushStats(member, 80, day(0));
+    const names = async (by: string) =>
+      (await call("GET", `/api/boards/${board.id}?by=${by}`, { cookie: admin.cookie })).data.members.map((m: any) => [m.display_name, m.rank]);
+    expect(await names("today")).toEqual([["Member", 1], ["Admin", 2]]);
+    expect(await names("week")).toEqual([["Admin", 1], ["Member", 2]]);
+    for (const bad of ["month", "TODAY", "today;DROP", ""]) {
+      expect((await call("GET", `/api/boards/${board.id}?by=${encodeURIComponent(bad)}`, { cookie: admin.cookie })).status, bad).toBe(400);
+    }
+  });
+
   it("returns the top 100 plus the caller's own row", async () => {
     const { admin, board } = await setup();
     const now = Date.now();
