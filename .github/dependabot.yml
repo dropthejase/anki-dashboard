@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # One grouped pull request a month for each ecosystem, to keep notifications down. Security alerts are separate
+  # from this schedule and still arrive straight away.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      npm-dependencies:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
