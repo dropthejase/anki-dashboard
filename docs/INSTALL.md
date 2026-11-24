@@ -81,6 +81,16 @@ If the deploy step fails with a permissions error on the migration, open the D1 
 
 Whether Workers Builds passes a build variable through to the deploy command has not been confirmed. If `D1_DATABASE_ID` is not found, put the id in your fork's copy of `wrangler.jsonc` instead. It is not a password, but then keep that fork private.
 
+### Automatic deploys from GitHub (optional)
+
+The repository's workflow in `.github/workflows/ci.yml` runs the tests on every push, and then deploys when the push is to `main` and every check passed. It needs three repository secrets (Settings, Secrets and variables, Actions):
+
+- `CLOUDFLARE_API_TOKEN`: create it in the Cloudflare dashboard under My Profile, API Tokens, using the "Edit Cloudflare Workers" template and adding the permission Account, D1, Edit. Limit it to your own account.
+- `CLOUDFLARE_ACCOUNT_ID`: shown in the dashboard sidebar and printed by `npx wrangler whoami`.
+- `D1_DATABASE_ID`: your database id from `wrangler d1 create`.
+
+Set the token without putting it in your shell history by running `gh secret set CLOUDFLARE_API_TOKEN`, which prompts for the value. The invite key stays on Cloudflare as a Worker secret and is not needed in GitHub.
+
 ### Check it works
 
 Open your URL. You should see the "Open the leaderboard from Anki" page. Then install the add-on, as below, and sync Anki.
