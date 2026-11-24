@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 import secrets
+import socket
 import sqlite3
 import ssl
 import unicodedata
@@ -21,6 +22,8 @@ from urllib.parse import urlparse
 SECRET_KEY = "leaderboard_secret"
 STATE_KEY = "last_pushed"  # machine-local, never synced
 MAX_RESPONSE_BYTES = 64 * 1024
+# Cloudflare blocks Python's default "Python-urllib" User-Agent (error 1010), so say who we are.
+USER_AGENT = "AnkiLeaderboard/0.1 (+https://github.com/dropthejase/anki-dashboard)"
 LINK_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{22}$")
 SECRET_RE = re.compile(r"^[A-Za-z0-9_-]{43}$")
 
@@ -81,7 +84,35 @@ class Transport(Protocol):
 
 
 class ServerError(Exception):
-    pass
+    """A failed call. The text is a short reason that can be shown to the user."""
+
+
+def _reason(e: BaseException) -> str:
+    """Names why a request failed, without leaking details such as addresses."""
+    chain = []
+    cur: BaseException | None = e
+    while cur is not None and cur not in chain:
+        chain.append(cur)
+        cur = cur.reason if isinstance(cur, urllib.error.URLError) and isinstance(cur.reason, BaseException) else cur.__cause__
+    if any(isinstance(x, ssl.SSLCertVerificationError) for x in chain):
+        return "certificate problem"
+    if any(isinstance(x, socket.gaierror) for x in chain):
+        return "address not found"
+    if any(isinstance(x, (TimeoutError, socket.timeout)) for x in chain):
+        return "timed out"
+    if any(isinstance(x, ConnectionRefusedError) for x in chain):
+        return "connection refused"
+    return "network error"
+
+
+def _ssl_context() -> ssl.SSLContext:
+    """Anki ships certifi's certificate bundle. Prefer it, because some Python builds ship no trusted roots."""
+    try:
+        import certifi  # type: ignore[import-not-found]
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -99,11 +130,11 @@ class HttpTransport:
         if u.scheme != "https" and not (u.scheme == "http" and local):
             raise ValueError("server_url must be https")
         self.base = base_url.rstrip("/")
-        self._ctx = ssl.create_default_context()  # verifies certificates and hostnames
+        self._ctx = _ssl_context()  # verifies certificates and hostnames
         self._opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=self._ctx))
 
     def post(self, path: str, secret: str | None, body: dict) -> tuple[int, dict]:
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "User-Agent": USER_AGENT}
         if secret:
             headers["Authorization"] = f"Bearer {secret}"
         req = urllib.request.Request(
@@ -116,15 +147,15 @@ class HttpTransport:
             except urllib.error.HTTPError as e:
                 status, raw = e.code, e.read(MAX_RESPONSE_BYTES + 1)
         except (urllib.error.URLError, TimeoutError, OSError) as e:
-            raise ServerError("network") from e
+            raise ServerError(_reason(e)) from e
         if len(raw) > MAX_RESPONSE_BYTES:
-            raise ServerError("response too large")
+            raise ServerError("reply too large")
         try:
             data = json.loads(raw)
         except ValueError as e:
-            raise ServerError("invalid response") from e
+            raise ServerError(f"unexpected reply, HTTP {status}") from e
         if not isinstance(data, dict):
-            raise ServerError("invalid response")
+            raise ServerError(f"unexpected reply, HTTP {status}")
         return status, data
 
 
@@ -159,8 +190,8 @@ class Leaderboard:
         new = secrets.token_urlsafe(32)
         try:
             status, _ = self.t.post("/api/identity/rotate", old, {"new_secret": new})
-        except ServerError:
-            return Result(False, "Could not reach the leaderboard.")
+        except ServerError as e:
+            return Result(False, f"Could not reach the leaderboard ({e}).")
         if status != 200:
             return Result(False, "The leaderboard refused the reset.")
         self.a.set_config(SECRET_KEY, new)
@@ -186,8 +217,8 @@ class Leaderboard:
                 if not self._register(secret):
                     return Result(False, "Could not register with the leaderboard.")
                 status, data = self.t.post("/api/sync", secret, body)
-        except ServerError:
-            return Result(False, "Could not reach the leaderboard. It will retry after your next sync.")
+        except ServerError as e:
+            return Result(False, f"Could not reach the leaderboard ({e}). It will retry after your next sync.")
         if status == 200:
             self.a.set_local(STATE_KEY, [local_date, count])
             return Result(True, f"Leaderboard updated: {count} reviews today.")
@@ -206,8 +237,8 @@ class Leaderboard:
                 if not self._register(secret):
                     return None, "Could not register with the leaderboard."
                 status, data = self.t.post("/api/login-link", secret, {})
-        except ServerError:
-            return None, "Could not reach the leaderboard."
+        except ServerError as e:
+            return None, f"Could not reach the leaderboard ({e})."
         token = data.get("token")
         if status != 201 or not isinstance(token, str) or not LINK_TOKEN_RE.match(token):
             return None, "The leaderboard did not return a valid sign-in link."
