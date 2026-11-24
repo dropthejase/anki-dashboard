@@ -26,7 +26,7 @@ flowchart LR
 
 | Part | Where | Notes |
 |---|---|---|
-| Add-on | `addon/` | Python. `core.py` holds all logic with no Anki imports so it can be tested alone. `anki_adapter.py` is the only module that touches Anki. `__init__.py` wires menus and the `sync_did_finish` hook. |
+| Add-on | `addon/` | Python. `core.py` holds all logic with no Anki imports so it can be tested alone. `anki_adapter.py` is the only module that touches Anki. `__init__.py` wires menus and the `sync_did_finish` hook. Requests carry a named `User-Agent`, because Cloudflare blocks Python's default one (error 1010), and use Anki's bundled certificate list when present. |
 | Worker API | `src/` | TypeScript on Workers (V8, not Node). `index.ts` is a regex router. `account.ts`, `boards.ts` and `retention.ts` hold the handlers. `auth.ts`, `crypto.ts`, `http.ts`, `ratelimit.ts` and `validate.ts` are shared helpers. |
 | Database | `migrations/` | D1 with strict tables and foreign keys that cascade on delete. |
 | Dashboard | `web/` | React 19, Vite, Tailwind 4, shadcn-style components. Served by the Worker as static assets with a single-page-app fallback. Only `/api/*` runs Worker code first. |

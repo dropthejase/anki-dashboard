@@ -270,3 +270,83 @@ class TestDefaultDisplayName:
     )
     def test_cleans_what_the_server_would_refuse(self, raw, expected):
         assert default_display_name(raw) == expected
+
+
+class TestReachability:
+    def test_sends_a_named_user_agent_not_pythons_default(self):
+        seen = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                seen.append(self.headers.get("User-Agent"))
+                body = b"{}"
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            HttpTransport(f"http://127.0.0.1:{server.server_port}").post("/x", None, {})
+        finally:
+            server.shutdown()
+            server.server_close()
+        assert seen and seen[0].startswith("AnkiLeaderboard/") and "urllib" not in seen[0].lower()
+
+    def test_a_non_json_block_page_names_the_http_status(self):
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = b"error code: 1010"
+                self.send_response(403)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            with pytest.raises(ServerError, match="HTTP 403"):
+                HttpTransport(f"http://127.0.0.1:{server.server_port}").post("/x", None, {})
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_failures_are_named_for_the_user(self):
+        import socket
+        import ssl
+        import urllib.error
+
+        from core import _reason
+
+        assert _reason(urllib.error.URLError(ssl.SSLCertVerificationError("x"))) == "certificate problem"
+        assert _reason(urllib.error.URLError(socket.gaierror(8, "x"))) == "address not found"
+        assert _reason(TimeoutError()) == "timed out"
+        assert _reason(urllib.error.URLError(ConnectionRefusedError())) == "connection refused"
+        assert _reason(OSError("boom")) == "network error"
+
+    def test_prefers_certifi_when_it_is_available(self, monkeypatch, tmp_path):
+        import sys
+        import types
+
+        import core
+
+        calls = []
+        fake = types.ModuleType("certifi")
+        fake.where = lambda: str(tmp_path / "bundle.pem")
+        monkeypatch.setitem(sys.modules, "certifi", fake)
+        monkeypatch.setattr(core.ssl, "create_default_context", lambda cafile=None: calls.append(cafile) or object())
+        core._ssl_context()
+        assert calls == [str(tmp_path / "bundle.pem")]
+
+    def test_messages_say_why_the_server_was_unreachable(self):
+        a = FakeAdapter()
+        a.set_config(SECRET_KEY, "s" * 43)
+        lb, _ = board(a, {"/api/login-link": [ServerError("certificate problem")]})
+        assert lb.sign_in_url() == (None, "Could not reach the leaderboard (certificate problem).")
