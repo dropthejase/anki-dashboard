@@ -109,11 +109,11 @@ export function Help() {
                 <strong className="text-foreground">Install from file…</strong>, and pick the file you downloaded.
               </p>
               <Screenshot src={toolsAddons} alt="Anki's Tools menu with Add-ons highlighted" width={884} height={678} maxWidth={340} />
-                          <p className="rounded-lg border border-border bg-muted px-3 py-2 text-foreground">
+              <p className="rounded-lg border border-border bg-muted px-3 py-2 text-foreground">
                 <strong>Then restart Anki.</strong> The add-on does not load until you do, and the new menu items will not appear. Anki reminds you with
                 &ldquo;Changes will take effect when Anki is restarted&rdquo;.
               </p>
-</Step>
+            </Step>
             <Step n={3} title="Point the add-on at this site">
               <p>
                 Back in <strong className="text-foreground">Tools → Add-ons</strong>, select <strong className="text-foreground">Anki Leaderboard</strong>,
