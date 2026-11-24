@@ -7,6 +7,8 @@ import { addDays, boardName, HEX32, isRealDate, plausibleDate, utcDate } from ".
 
 const TOP_N = 100;
 const MAX_BOARDS_PER_USER = 50;
+/** Upper bound on a member limit. This is input validation, not a performance promise: a board view reads every member and their last seven days. */
+export const MAX_MEMBERS_PER_BOARD = 1_000_000;
 
 interface BoardRow {
   id: string;
@@ -89,7 +91,14 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
     .first<{ n: number }>();
   const showInvite = role === "admin" || board.invite_enabled === 1;
   return json({
-    board: { id: board.id, name: board.name, invite_enabled: board.invite_enabled === 1, member_cap: board.member_cap, member_count: total?.n ?? 0 },
+    board: {
+      id: board.id,
+      name: board.name,
+      invite_enabled: board.invite_enabled === 1,
+      member_cap: board.member_cap,
+      max_members: MAX_MEMBERS_PER_BOARD,
+      member_count: total?.n ?? 0,
+    },
     role,
     date,
     join_path: showInvite && board.invite_enabled === 1 ? await joinPath(c, board) : null,
@@ -113,7 +122,7 @@ export async function updateBoard(c: Ctx, boardId: string): Promise<Response> {
   }
   if ("member_cap" in body) {
     const cap = body.member_cap;
-    if (cap !== null && !(typeof cap === "number" && Number.isInteger(cap) && cap >= 1 && cap <= 100_000)) {
+    if (cap !== null && !(typeof cap === "number" && Number.isInteger(cap) && cap >= 1 && cap <= MAX_MEMBERS_PER_BOARD)) {
       throw new HttpError(400, "invalid_member_cap");
     }
     sets.push("member_cap = ?");
@@ -235,10 +244,10 @@ export async function join(c: Ctx): Promise<Response> {
   const res = await c.env.DB.prepare(
     `INSERT INTO memberships (board_id, user_id, role, joined_at)
      SELECT ?1, ?2, 'member', ?3
-     WHERE (SELECT member_cap FROM boards WHERE id = ?1) IS NULL
-        OR (SELECT COUNT(*) FROM memberships WHERE board_id = ?1) < (SELECT member_cap FROM boards WHERE id = ?1)`,
+     WHERE (SELECT COUNT(*) FROM memberships WHERE board_id = ?1)
+         < MIN(COALESCE((SELECT member_cap FROM boards WHERE id = ?1), ?4), ?4)`,
   )
-    .bind(board.id, user.id, c.now)
+    .bind(board.id, user.id, c.now, MAX_MEMBERS_PER_BOARD)
     .run();
   if (res.meta.changes === 0) throw new HttpError(409, "board_full");
   return json({ board_id: board.id, already_member: false }, 201);

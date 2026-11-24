@@ -1,7 +1,10 @@
 import { sha256Hex } from "./crypto";
 import { HttpError } from "./http";
+import { rateLimit } from "./ratelimit";
 import type { Ctx, UserRow } from "./types";
 import { DAY_MS } from "./validate";
+
+const WRITES_PER_HOUR = 200;
 
 export const SECRET_RE = /^[A-Za-z0-9_-]{43}$/; // 256 bits, base64url
 
@@ -59,6 +62,8 @@ export async function requireUser(c: Ctx): Promise<UserRow> {
     .bind(idHash, c.now, c.now - SESSION_ABSOLUTE_MS)
     .first<UserRow & { s_created: number; s_expires: number }>();
   if (!row) throw new HttpError(401, "not_signed_in");
+  // Every change a signed-in user makes shares one hourly budget, so a single account cannot spam writes.
+  if (method !== "GET" && method !== "HEAD") await rateLimit(c, "write-user", row.id, WRITES_PER_HOUR, 3600);
   // Extend the sliding expiry at most hourly to avoid a write on every request.
   if (c.now - (row.s_expires - SESSION_TTL_MS) > SESSION_EXTEND_EVERY_MS) {
     const next = Math.min(c.now + SESSION_TTL_MS, row.s_created + SESSION_ABSOLUTE_MS);

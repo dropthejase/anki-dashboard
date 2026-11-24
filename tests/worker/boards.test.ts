@@ -135,6 +135,14 @@ describe("invites", () => {
     expect(results.filter((r) => r.data.error === "board_full")).toHaveLength(2);
   });
 
+  it("rejects a member limit above the ceiling", async () => {
+    const { admin, board } = await setup();
+    for (const member_cap of [1_000_001, 10_000_000, 1e21]) {
+      expect((await call("PATCH", `/api/boards/${board.id}`, { cookie: admin.cookie, body: { member_cap } })).status, String(member_cap)).toBe(400);
+    }
+    expect((await call("PATCH", `/api/boards/${board.id}`, { cookie: admin.cookie, body: { member_cap: 1_000_000 } })).status).toBe(200);
+  });
+
   it("rate-limits join attempts", async () => {
     const { outsider, board } = await setup();
     let last = 0;

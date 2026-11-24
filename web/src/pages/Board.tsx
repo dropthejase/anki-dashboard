@@ -187,9 +187,16 @@ function AdminSettings({ view, act, onDeleted }: { view: BoardView; act: (fn: ()
         </form>
         <form
           className="flex flex-col gap-3 sm:flex-row"
-          onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { member_cap: cap === "" ? null : Number(cap) })); }}
+          onSubmit={(e) => { e.preventDefault(); void act(() => api("PATCH", `/api/boards/${id}`, { member_cap: cap === "" ? null : Math.min(Number(cap), view.board.max_members) })); }}
         >
-          <Input aria-label="Member limit" type="number" min={1} placeholder="No limit" value={cap} onChange={(e) => setCap(e.target.value)} />
+          <Input
+            aria-label="Member limit"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder={`Up to ${view.board.max_members.toLocaleString("en-GB")}`}
+            value={cap}
+            onChange={(e) => setCap(e.target.value.replace(/\D/g, "").slice(0, 7))}
+          />
           <Button type="submit" className="sm:w-44 sm:shrink-0">Set member limit</Button>
         </form>
         <div className="flex flex-wrap items-center gap-2">

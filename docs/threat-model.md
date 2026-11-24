@@ -88,6 +88,9 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T24 | Add-on | A redirect from the server (hostile or misconfigured) makes the add-on forward its Authorization header, the identity secret, to another address, possibly over plain http. | I |
 | T25 | Server HMAC key | A missing, empty or short `INVITE_HMAC_KEY` makes invite links guessable or forgeable. | E |
 | T26 | Worker | An oversized request body is buffered whole into memory before it is rejected. | D |
+| T27 | Names | Stacked combining marks ("zalgo" text) in a display or board name break the layout for other members. | T |
+| T28 | Add-on | The default display name, taken from the Anki profile name, is refused by the server, so registration fails with no explanation. | D |
+| T29 | Worker | One signed-in account spams changes (renames, role changes and so on) to burn the free-tier write quota. | D |
 
 ## 3. What are we going to do about it?
 
@@ -119,6 +122,9 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | T24 | The add-on never follows redirects; any redirect is an error. | addon/core.py | `TestRedirects`: a 302 is refused and the secret never reaches the target. |
 | T25 | The Worker refuses to sign or verify invites unless the key is at least 32 characters, returning a 500 instead. | src/crypto.ts | `invite key` test in `tests/worker/hardening.test.ts`. |
 | T26 | Bodies are read as a stream with a 4 KB cap and a Content-Length pre-check. | src/http.ts | `request bodies` test in `tests/worker/hardening.test.ts`. |
+| T27 | Names reject four or more combining marks in a row, on top of the existing length, control, bidi and angle-bracket rules. | src/validate.ts | `input protections` test in `tests/worker/identity.test.ts`. |
+| T28 | The add-on cleans the profile name with the same rules before sending it, falling back to "Anki user". | addon/core.py | `TestDefaultDisplayName`. |
+| T29 | Every change by a signed-in user shares a budget of 200 per hour. | src/auth.ts | `input protections` test in `tests/worker/identity.test.ts`. |
 
 ### Accepted risks
 

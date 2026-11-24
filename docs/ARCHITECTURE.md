@@ -71,7 +71,7 @@ The add-on counts answers in the local review log since Anki's day cutoff ("next
 
 ## Abuse limits
 
-Rate limits live in D1 and cost one write per limited request: registration 10 per hour per IP, sign-in link requests 10 per hour per user, link inspect and consume 60 per hour per IP, joins 30 per hour per user and 120 per hour per IP, board creation 20 per day per user, and identity rotation 5 per day per user. Request bodies are capped at 4 KB, display names at 30 characters and board names at 60, and a user can be in at most 50 boards. Names are Unicode-normalised and reject control, format and bidi characters and angle brackets.
+Rate limits live in D1 and cost one write per limited request. Every change a signed-in user makes also shares a budget of 200 per hour. The limits are: registration 10 per hour per IP, sign-in link requests 10 per hour per user, link inspect and consume 60 per hour per IP, joins 30 per hour per user and 120 per hour per IP, board creation 20 per day per user, and identity rotation 5 per day per user. Request bodies are capped at 4 KB, display names at 30 characters and board names at 60, a user can be in at most 50 boards, and an admin can set a member limit of up to 1,000,000. That number is only input validation. Viewing a board reads every member and their last seven days (roughly nine rows per member), so boards beyond a few hundred members use the free-tier read budget quickly, and a board of that size would need a different design. Names are Unicode-normalised and reject control, format and bidi characters and angle brackets.
 
 ## Scheduled job
 

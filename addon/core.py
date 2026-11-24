@@ -10,6 +10,7 @@ import re
 import secrets
 import sqlite3
 import ssl
+import unicodedata
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -31,6 +32,33 @@ COUNT_SQL = "SELECT COUNT() FROM revlog WHERE id > ? AND type != 4 AND type != 5
 def count_reviews(db: sqlite3.Connection, day_cutoff: int) -> int:
     """`day_cutoff` is the Unix time (seconds) at which the next Anki day starts."""
     return int(db.execute(COUNT_SQL, ((day_cutoff - 86400) * 1000,)).fetchone()[0])
+
+
+MAX_NAME_CHARS = 30
+MAX_STACKED_MARKS = 3
+
+
+def default_display_name(raw: str) -> str:
+    """Turns an Anki profile name into something the server will accept, so registration never fails on a name.
+
+    Drops control and invisible characters and angle brackets, limits stacked combining marks, collapses
+    whitespace and caps the length. The server applies the same rules and is the authority.
+    """
+    text = unicodedata.normalize("NFC", raw or "")
+    kept: list[str] = []
+    marks = 0
+    for ch in text:
+        if ch in "<>" or unicodedata.category(ch).startswith("C"):
+            continue
+        if unicodedata.category(ch).startswith("M"):
+            marks += 1
+            if marks > MAX_STACKED_MARKS:
+                continue
+        else:
+            marks = 0
+        kept.append(ch)
+    name = " ".join("".join(kept).split())[:MAX_NAME_CHARS].strip()
+    return name or "Anki user"
 
 
 def anki_day(day_cutoff: int) -> str:
@@ -141,7 +169,7 @@ class Leaderboard:
 
     # --- pushing counts -------------------------------------------------------------------
     def _register(self, secret: str) -> bool:
-        status, data = self.t.post("/api/register", secret, {"display_name": self.a.profile_name()[:30] or "Anki user"})
+        status, data = self.t.post("/api/register", secret, {"display_name": default_display_name(self.a.profile_name())})
         return status in (200, 201) and isinstance(data.get("user_id"), str)
 
     def push(self, force: bool = False) -> Result:
