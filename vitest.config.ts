@@ -10,6 +10,7 @@ export default defineConfig(async () => {
         miniflare: {
           bindings: {
             INVITE_HMAC_KEY: "test-only-hmac-key-not-a-real-secret",
+            ADDON_LATEST_VERSION: "9.9.9",
             TEST_MIGRATIONS: migrations,
           },
         },

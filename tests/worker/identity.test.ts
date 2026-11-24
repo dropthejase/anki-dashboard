@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { releaseVersion } from "../../src/validate";
 import { call, db, makeUser, newSecret, ORIGIN, pushStats, today } from "./helpers";
 
 describe("registration", () => {
@@ -201,5 +202,22 @@ describe("input protections", () => {
     expect(last).toBe(429);
     // Reading is unaffected.
     expect((await call("GET", "/api/me", { cookie: u.cookie })).status).toBe(200);
+  });
+});
+
+
+describe("add-on update notice", () => {
+  it("reports the newest add-on version in the sync reply", async () => {
+    const u = await makeUser("Notified");
+    const r = await call("POST", "/api/sync", { secret: u.secret, body: { local_date: today(), review_count: 3 } });
+    expect(r.status).toBe(200);
+    expect(r.data).toEqual({ ok: true, addon_latest: "9.9.9" });
+  });
+
+  it("only ever reports a plain x.y.z number", () => {
+    expect(releaseVersion("0.2.0")).toBe("0.2.0");
+    for (const bad of [undefined, null, "", "1", "1.2", "1.2.3.4", "v1.2.3", "1.2.3-beta", "<b>1.2.3</b>", "1.2.99999", 123]) {
+      expect(releaseVersion(bad), String(bad)).toBeNull();
+    }
   });
 });

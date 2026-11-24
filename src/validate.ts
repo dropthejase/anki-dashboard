@@ -21,6 +21,11 @@ export function cleanName(value: unknown, field: string, max: number): string {
 export const displayName = (v: unknown) => cleanName(v, "display_name", 30);
 export const boardName = (v: unknown) => cleanName(v, "board_name", 60);
 
+/** A release number such as 0.2.0, or null for anything else (including unset). */
+export function releaseVersion(value: unknown): string | null {
+  return typeof value === "string" && /^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(value) ? value : null;
+}
+
 export const utcDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 export function isRealDate(s: unknown): s is string {

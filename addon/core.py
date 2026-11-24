@@ -19,11 +19,13 @@ from datetime import date
 from typing import Any, Optional, Protocol
 from urllib.parse import urlparse
 
+ADDON_VERSION = "0.2.0"  # keep in step with ADDON_LATEST_VERSION in wrangler.jsonc when releasing (docs/RELEASING.md)
 SECRET_KEY = "leaderboard_secret"
 STATE_KEY = "last_pushed"  # machine-local, never synced
+NOTICE_KEY = "update_notice_for"  # machine-local: the newest version we already told the user about
 MAX_RESPONSE_BYTES = 64 * 1024
 # Cloudflare blocks Python's default "Python-urllib" User-Agent (error 1010), so say who we are.
-USER_AGENT = "AnkiLeaderboard/0.1 (+https://github.com/dropthejase/anki-dashboard)"
+USER_AGENT = f"AnkiLeaderboard/{ADDON_VERSION} (+https://github.com/dropthejase/anki-dashboard)"
 LINK_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{22}$")
 SECRET_RE = re.compile(r"^[A-Za-z0-9_-]{43}$")
 
@@ -163,6 +165,14 @@ class HttpTransport:
 class Result:
     ok: bool
     message: str
+    notice: Optional[str] = None  # shown separately, for example "a newer add-on is available"
+
+
+VERSION_RE = re.compile(r"^\d{1,4}\.\d{1,4}\.\d{1,4}$")
+
+
+def _version(text: Any) -> Optional[tuple[int, ...]]:
+    return tuple(int(p) for p in text.split(".")) if isinstance(text, str) and VERSION_RE.match(text) else None
 
 
 class Leaderboard:
@@ -221,10 +231,21 @@ class Leaderboard:
             return Result(False, f"Could not reach the leaderboard ({e}). It will retry after your next sync.")
         if status == 200:
             self.a.set_local(STATE_KEY, [local_date, count])
-            return Result(True, f"Leaderboard updated: {count} reviews today.")
+            return Result(True, f"Leaderboard updated: {count} reviews today.", self._update_notice(data.get("addon_latest"), force))
         if status == 429:
             return Result(False, "Leaderboard updates are limited to one every 5 minutes. Try again shortly.")
         return Result(False, "The leaderboard could not accept the update.")
+
+    def _update_notice(self, latest: Any, always: bool) -> Optional[str]:
+        """Tells the user once per release when the server reports a newer add-on. The server only supplies a version
+        number: the link in the message is built from our own configured address."""
+        newest, mine = _version(latest), _version(ADDON_VERSION)
+        if newest is None or mine is None or newest <= mine:
+            return None
+        if not always and self.a.get_local(NOTICE_KEY) == latest:
+            return None
+        self.a.set_local(NOTICE_KEY, latest)
+        return f"A newer Leaderboard add-on ({latest}) is available. Download it from {self.base_url}/help"
 
     # --- website sign-in ------------------------------------------------------------------
     def sign_in_url(self) -> tuple[Optional[str], str]:

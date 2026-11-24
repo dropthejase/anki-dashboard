@@ -33,9 +33,26 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
 
+  # The real add-on code against a real local Worker. Catches changes that would break add-ons already installed on people's computers.
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.10" }
+      - run: npm ci
+      - run: pip install pytest
+      - name: Run the add-on against a local Worker
+        run: |
+          npm run e2e:server > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:8787/ > /dev/null && break; sleep 2; done
+          LEADERBOARD_URL=http://localhost:8787 python -m pytest tests/addon/test_contract.py -q
+
   # Deploys only after every check passes, and only for pushes to main. Pull requests never see these secrets.
   deploy:
-    needs: [test, e2e]
+    needs: [test, e2e, contract]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency:
