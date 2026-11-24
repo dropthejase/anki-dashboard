@@ -89,6 +89,11 @@ test("turning the invite link off and regenerating it blocks old links", async (
 
   await alicePage.getByRole("button", { name: "Board options" }).click();
   await alicePage.getByRole("menuitem", { name: "Board settings" }).click();
+  // The member limit field only keeps digits, and is capped at three of them.
+  const limit = alicePage.getByLabel("Member limit");
+  await limit.fill("-5e3.7");
+  await expect(limit).toHaveValue("537");
+  await limit.fill("");
   await alicePage.getByRole("button", { name: "Regenerate link" }).click();
   await alicePage.getByRole("button", { name: "Yes" }).click();
   await expect(alicePage.getByTestId("invite-url")).not.toHaveText(oldInvite);

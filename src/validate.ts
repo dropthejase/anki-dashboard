@@ -6,11 +6,13 @@ export const MAX_REVIEWS_PER_DAY = 10_000;
 
 /** Reject control, format (incl. bidi overrides), private-use and unassigned characters, plus angle brackets. */
 const FORBIDDEN = /[\p{C}<>]/u;
+/** Four or more combining marks in a row is "zalgo" text, which overflows the layout. Real names rarely need more than three. */
+const STACKED_MARKS = /\p{M}{4,}/u;
 
 export function cleanName(value: unknown, field: string, max: number): string {
   if (typeof value !== "string") throw new HttpError(400, `invalid_${field}`);
   const name = value.normalize("NFC").replace(/\s+/g, " ").trim();
-  if (name.length < 1 || [...name].length > max || FORBIDDEN.test(name)) {
+  if (name.length < 1 || [...name].length > max || FORBIDDEN.test(name) || STACKED_MARKS.test(name)) {
     throw new HttpError(400, `invalid_${field}`);
   }
   return name;

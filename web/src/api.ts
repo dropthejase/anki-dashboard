@@ -45,7 +45,8 @@ export interface Member {
   is_me: boolean;
 }
 export interface BoardView {
-  board: { id: string; name: string; invite_enabled: boolean; member_cap: number | null; member_count: number };
+  board: { id: string; name: string; invite_enabled: boolean; member_cap: number | null;
+    max_members: number; member_count: number };
   role: "admin" | "member";
   date: string;
   join_path: string | null;
@@ -58,6 +59,7 @@ export const errorText = (e: unknown): string => {
       last_admin: "A board needs at least one admin. Make someone else an admin first, or delete the board.",
       confirm_mismatch: "The name you typed does not match.",
       board_full: "This board is full.",
+      invalid_member_cap: "The member limit must be a whole number of at least 1, and no higher than the maximum shown.",
       rate_limited: "Too many attempts. Try again later.",
       too_many_boards: "You have reached the board limit.",
       invalid_board_name: "Board names must be 1 to 60 characters, without < or >.",

@@ -13,6 +13,7 @@ from core import (
     Leaderboard,
     ServerError,
     anki_day,
+    default_display_name,
     count_reviews,
 )
 
@@ -249,3 +250,23 @@ class TestRedirects:
             for s in (target, redirector):
                 s.shutdown()
                 s.server_close()
+
+
+class TestDefaultDisplayName:
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("Jason", "Jason"),
+            ("<Jason>", "Jason"),
+            ("  Jason \t Lee  ", "Jason Lee"),
+            ("Ja\u202eson\x00", "Jason"),  # bidi override and a control character
+            ("", "Anki user"),
+            ("<>", "Anki user"),
+            ("x" * 80, "x" * 30),
+            ("Z" + "\u0300\u0301\u0302\u0303\u0304" + "a", "Z\u0300\u0301\u0302a"),  # marks capped at three
+            ("José", "José"),
+            ("日本語", "日本語"),
+        ],
+    )
+    def test_cleans_what_the_server_would_refuse(self, raw, expected):
+        assert default_display_name(raw) == expected

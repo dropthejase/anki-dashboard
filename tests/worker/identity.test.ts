@@ -179,3 +179,27 @@ describe("account", () => {
     expect((await call("POST", "/api/me/delete", { cookie: u.cookie, body: { confirm: "delete" }, origin: "https://evil.example" })).status).toBe(403);
   });
 });
+
+
+describe("input protections", () => {
+  it("rejects stacked combining marks but accepts ordinary accents and scripts", async () => {
+    const zalgo = `Z${"\u0300\u0301\u0302\u0303\u0304"}a`;
+    const bad = await call("POST", "/api/register", { secret: newSecret(), body: { display_name: zalgo }, ip: "198.51.100.200" });
+    expect(bad.status).toBe(400);
+    for (const [i, name] of ["José", "Zoë", "日本語", "สวัสดี", "Åsa 😀"].entries()) {
+      const ok = await call("POST", "/api/register", { secret: newSecret(), body: { display_name: name }, ip: `198.51.100.${201 + i}` });
+      expect(ok.status, name).toBe(201);
+    }
+  });
+
+  it("limits how many changes one signed-in user can make per hour", async () => {
+    const u = await makeUser("Busy");
+    let last = 200;
+    for (let i = 0; i < 205 && last !== 429; i++) {
+      last = (await call("PATCH", "/api/me", { cookie: u.cookie, body: { display_name: `Busy ${i % 9}` } })).status;
+    }
+    expect(last).toBe(429);
+    // Reading is unaffected.
+    expect((await call("GET", "/api/me", { cookie: u.cookie })).status).toBe(200);
+  });
+});
