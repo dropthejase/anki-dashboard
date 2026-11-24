@@ -71,9 +71,11 @@ describe("Help page", () => {
     expect(screen.getByLabelText("Server address")).toHaveTextContent(location.origin);
     expect(screen.getAllByRole("img")).toHaveLength(5);
     for (const img of screen.getAllByRole("img")) expect(img).toHaveAttribute("alt", expect.stringMatching(/\w{10,}/));
-    expect(screen.getByRole("heading", { name: "Something not working?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Common questions" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Something not working?" })).toBeNull();
     expect(screen.getByText(/I do not see Open Leaderboard in the Tools menu/)).toBeInTheDocument();
     expect(screen.getByText(/reinstall it/)).toBeInTheDocument();
+    expect(screen.getByText(/Could not reach the leaderboard/)).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent).slice(0, 6)).toEqual([
       "Download the add-on", "Install the add-on", "Point the add-on at this site", "Sync Anki", "Open the leaderboard", "Make or join a board",
     ]);
