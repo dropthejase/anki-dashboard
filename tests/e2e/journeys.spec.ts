@@ -65,6 +65,11 @@ test("create a board, invite through the link, and see counts and admin controls
   await expect(rows.nth(0)).toContainText("Alice");
   await expect(rows.nth(0).getByTestId("today")).toHaveText("120");
   await expect(rows.nth(1)).toContainText("Bob");
+  await expect(rows.nth(1).getByTestId("today")).toHaveText("45");
+  // The 7 days tab ranks and shows the weekly totals instead.
+  await bobPage.getByRole("tab", { name: "7 days" }).click();
+  await expect(bobPage.getByRole("tab", { name: "7 days" })).toHaveAttribute("aria-selected", "true");
+  await expect(rows.nth(0).getByTestId("week")).toHaveText("120");
   await expect(rows.nth(1).getByTestId("week")).toHaveText("45");
   await bobPage.getByRole("button", { name: "Board options" }).click();
   await expect(bobPage.getByRole("menuitem", { name: "Leave board" })).toBeVisible();

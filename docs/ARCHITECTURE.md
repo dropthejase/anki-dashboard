@@ -77,7 +77,7 @@ A signed-in user can make a recovery code on the Account page (160 random bits, 
 - An invite link is `/join#<boardId>.<token>` where the token is `HMAC-SHA256(INVITE_HMAC_KEY, boardId:epoch)`. It is computed when needed and never stored. Regenerating the link bumps `invite_epoch`, and disabling it turns joining off (ADR 0002).
 - Admins are equals. Rules that keep boards manageable (ADR 0004): the last admin cannot leave, be demoted or be removed; any admin can delete the board; deleting needs the exact board name; the daily job repairs any board found with members and no admin.
 - A board can have a picture (ADR 0007). Admins set it from Board settings: the browser crops and shrinks it to a 192-pixel square JPEG, and the Worker accepts only a JPEG of at most 48 KB. Members fetch it from `/api/boards/<id>/image?v=<version>`; the response is always `image/jpeg` with `nosniff` and a sandbox policy, and is cached for a year because the version in the address changes with the picture. The board lists and board view carry only `image_version`.
-- The leaderboard query ranks by today, then seven-day total, then name, using a window function. It returns the top 100 plus the caller's own row.
+- The leaderboard query ranks with a window function and returns the top 100 plus the caller's own row. `?by=today` (the default) ranks by today, then seven-day total, then name. `?by=week` ranks by seven-day total, then today, then name. Any other value is a 400, and only those two fixed orderings ever reach the query. The board page has Today and 7 days tabs, remembers the choice in the browser, and fetches the board again when the tab changes.
 
 ## Abuse limits
 

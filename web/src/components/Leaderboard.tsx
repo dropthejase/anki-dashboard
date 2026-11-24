@@ -2,6 +2,7 @@ import { Crown, Medal, Sparkle } from "lucide-react";
 import type { Member } from "../api";
 import { timeAgo } from "../lib/utils";
 import { CountUp } from "./CountUp";
+import type { RankBy } from "./RankTabs";
 import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
 
@@ -25,7 +26,7 @@ export function LeaderboardSkeleton() {
   );
 }
 
-export function Leaderboard({ members, actions }: { members: Member[]; actions?: (m: Member) => React.ReactNode }) {
+export function Leaderboard({ members, by = "today", actions }: { members: Member[]; by?: RankBy; actions?: (m: Member) => React.ReactNode }) {
   return (
     <div className="-mx-3 overflow-x-auto">
       <table className="w-full text-sm">
@@ -33,8 +34,7 @@ export function Leaderboard({ members, actions }: { members: Member[]; actions?:
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th className="px-3 py-2 font-medium">#</th>
             <th className="px-3 py-2 font-medium">Member</th>
-            <th className="px-3 py-2 text-right font-medium">Today</th>
-            <th className="whitespace-nowrap px-3 py-2 text-right font-medium">7 days</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right font-medium">{by === "today" ? "Today" : "7 days"}</th>
             {actions && <th className="px-3 py-2 text-right font-medium"><span className="sr-only">Actions</span></th>}
           </tr>
         </thead>
@@ -57,8 +57,7 @@ export function Leaderboard({ members, actions }: { members: Member[]; actions?:
                   <span className="text-xs text-muted-foreground">Updated {timeAgo(m.last_updated)}</span>
                 </div>
               </td>
-              <td className="px-3 py-3 text-right font-semibold tabular-nums"><CountUp value={m.today} data-testid="today" /></td>
-              <td className="px-3 py-3 text-right tabular-nums text-muted-foreground"><CountUp value={m.week} data-testid="week" /></td>
+              <td className="px-3 py-3 text-right font-semibold tabular-nums"><CountUp value={by === "today" ? m.today : m.week} data-testid={by} /></td>
               {actions && <td className="px-3 py-3 text-right">{actions(m)}</td>}
             </tr>
           ))}
