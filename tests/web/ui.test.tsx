@@ -80,7 +80,7 @@ describe("Help page", () => {
     expect(screen.getByRole("link", { name: /See the install guide/ })).toHaveAttribute("href", expect.stringContaining("docs/INSTALL.md"));
     const flow = screen.getByRole("list", { name: "How phone reviews reach the leaderboard" });
     expect(within(flow).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      "Sync your phone", "AnkiWeb", "Sync Anki on your computer", "Leaderboard updates",
+      "Sync your phone", "Sync Anki on your computer", "Leaderboard updates",
     ]);
   });
 });

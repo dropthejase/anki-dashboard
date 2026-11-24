@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, PackageX, RefreshCw, Smartphone, Trash2, Trophy, Unplug, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, Download, Link2, Monitor, PackageX, RefreshCw, Smartphone, Trash2, Trophy, Unplug, type LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import addonConfig from "../assets/help/anki-addon-config.png";
 import addonMenu from "../assets/help/anki-addon-menu.png";
@@ -155,7 +155,6 @@ export function Help() {
             label="How phone reviews reach the leaderboard"
             nodes={[
               { icon: Smartphone, text: "Sync your phone" },
-              { icon: Cloud, text: "AnkiWeb" },
               { icon: Monitor, text: "Sync Anki on your computer" },
               { icon: Trophy, text: "Leaderboard updates" },
             ]}

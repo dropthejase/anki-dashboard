@@ -81,9 +81,13 @@ A daily cron at 03:17 UTC runs `purge` in `src/retention.ts`: it deletes account
 
 Static assets get a strict Content Security Policy (`default-src 'none'`, scripts and styles from `self` only) and related headers from `web/public/_headers`. API responses are `no-store` with `nosniff` and `no-referrer`. Nothing is rendered as raw HTML.
 
+## Add-on update notice
+
+The Worker reports the newest add-on version in its reply to a sync (`addon_latest`, from the `ADDON_LATEST_VERSION` setting, empty for self-hosters who do not want it). The add-on compares that with its own version and, if it is older, shows a notice once per release with a link to the Help page on the user's own server. No other site is contacted, so no new party sees anyone's IP address. See `docs/RELEASING.md`.
+
 ## Delivery
 
-Every push runs the Worker, web and add-on tests. A push to `main` also runs the browser journeys, and only if all of them pass does the workflow deploy, using a Cloudflare API token held as a GitHub secret. Pull requests run the same checks but never receive the secrets. See `docs/INSTALL.md`.
+Every push runs the Worker, web and add-on tests. A push to `main` also runs the browser journeys, and a contract test that runs the real add-on against a local Worker. Only if all of them pass does the workflow deploy, using a Cloudflare API token held as a GitHub secret. Pull requests run the same checks but never receive the secrets. See `docs/INSTALL.md`.
 
 ## Configuration
 

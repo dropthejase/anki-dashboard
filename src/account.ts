@@ -4,7 +4,7 @@ import { HttpError, json, readJson } from "./http";
 import { rateLimit } from "./ratelimit";
 import { deleteUser } from "./retention";
 import type { Ctx } from "./types";
-import { displayName, isRealDate, MAX_REVIEWS_PER_DAY, plausibleDate, utcDate } from "./validate";
+import { displayName, isRealDate, MAX_REVIEWS_PER_DAY, plausibleDate, releaseVersion, utcDate } from "./validate";
 
 const MIN_PUSH_INTERVAL_MS = 5 * 60_000;
 const LOGIN_LINK_TTL_MS = 120_000;
@@ -74,7 +74,8 @@ export async function sync(c: Ctx): Promise<Response> {
       user.id,
     ),
   ]);
-  return json({ ok: true });
+  const addonLatest = releaseVersion(c.env.ADDON_LATEST_VERSION);
+  return json(addonLatest ? { ok: true, addon_latest: addonLatest } : { ok: true });
 }
 
 /** Add-on: request a one-time sign-in token (the add-on puts it in a URL fragment). */

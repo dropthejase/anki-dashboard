@@ -13,6 +13,7 @@ from core import (
     Leaderboard,
     ServerError,
     anki_day,
+    ADDON_VERSION,
     default_display_name,
     count_reviews,
 )
@@ -56,10 +57,10 @@ def test_anki_day_is_the_date_the_day_started():
 
 
 class FakeAdapter:
-    def __init__(self, count=10, secret=None, day="2026-10-25"):
+    def __init__(self, count=10, secret=None, day=None):
         self.config = {SECRET_KEY: secret} if secret else {}
         self.local = {}
-        self.count, self.day = count, day
+        self.count, self.day = count, day or date.today().isoformat()
 
     def get_config(self, k): return self.config.get(k)
     def set_config(self, k, v): self.config[k] = v
@@ -350,3 +351,34 @@ class TestReachability:
         a.set_config(SECRET_KEY, "s" * 43)
         lb, _ = board(a, {"/api/login-link": [ServerError("certificate problem")]})
         assert lb.sign_in_url() == (None, "Could not reach the leaderboard (certificate problem).")
+
+
+class TestUpdateNotice:
+    def _lb(self, latest, adapter=None):
+        a = adapter or FakeAdapter()
+        a.set_config(SECRET_KEY, "s" * 43)
+        lb, _ = board(a, {"/api/sync": [(200, {"ok": True, "addon_latest": latest} if latest is not None else {"ok": True})]})
+        return lb, a
+
+    def test_a_newer_version_is_announced_with_our_own_link(self):
+        lb, _ = self._lb("99.0.0")
+        notice = lb.push().notice
+        assert "99.0.0" in notice and notice.endswith(lb.base_url + "/help")
+
+    def test_announced_once_per_release_but_always_on_a_manual_sync(self):
+        a = FakeAdapter()
+        a.set_config(SECRET_KEY, "s" * 43)
+        lb, _ = board(a, {"/api/sync": [(200, {"addon_latest": "99.0.0"})] * 3})
+        assert lb.push(force=True).notice
+        assert lb.push(force=True).notice  # a manual sync repeats it
+        assert lb.push().notice is None  # an automatic one already told the user
+
+    @pytest.mark.parametrize("latest", [None, ADDON_VERSION, "0.0.1", "garbage", "1.2", "1.2.3.4", 5, "99.0.0; rm -rf /", "<script>"])
+    def test_nothing_is_announced_for_the_same_older_or_invalid_versions(self, latest):
+        lb, _ = self._lb(latest)
+        assert lb.push().notice is None
+
+    def test_the_user_agent_carries_the_version(self):
+        from core import USER_AGENT
+
+        assert USER_AGENT.startswith(f"AnkiLeaderboard/{ADDON_VERSION} ")

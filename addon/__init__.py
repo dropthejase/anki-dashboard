@@ -33,7 +33,7 @@ def _on_sync_did_finish() -> None:
         board = _board()
     except ValueError:
         return
-    _run(board.on_sync_finished, lambda r: None if r.ok else tooltip(r.message))
+    _run(board.on_sync_finished, lambda r: tooltip(r.message) if not r.ok else (tooltip(r.notice) if r.notice else None))
 
 
 def _sync_now() -> None:
@@ -41,7 +41,7 @@ def _sync_now() -> None:
         board = _board()
     except ValueError:
         return showInfo("The leaderboard server_url in the add-on config is not valid.")
-    _run(lambda: board.push(force=True), lambda r: tooltip(r.message))
+    _run(lambda: board.push(force=True), lambda r: tooltip(r.message + (f" {r.notice}" if r.notice else "")))
 
 
 def _open() -> None:
