@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, RefreshCw, Smartphone, Trash2, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, Cloud, Download, Link2, Monitor, PackageX, RefreshCw, Smartphone, Trash2, Trophy, Unplug, type LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import addonConfig from "../assets/help/anki-addon-config.png";
 import addonMenu from "../assets/help/anki-addon-menu.png";
@@ -36,6 +36,17 @@ function Screenshot({ src, alt, width, height, maxWidth }: { src: string; alt: s
       style={{ maxWidth }}
       className="h-auto w-full rounded-lg border border-border"
     />
+  );
+}
+
+function Faq({ icon: Icon, question, children }: { icon: LucideIcon; question: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <h3 className="flex items-center gap-2 font-medium">
+        <Icon className="h-4 w-4 shrink-0 text-accent" aria-hidden /> {question}
+      </h3>
+      <div className="space-y-2 text-muted-foreground">{children}</div>
+    </div>
   );
 }
 
@@ -156,18 +167,47 @@ export function Help() {
           <CardTitle>Common questions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1">
-            <h3 className="flex items-center gap-2 font-medium"><RefreshCw className="h-4 w-4 text-accent" aria-hidden /> My count looks too low</h3>
-            <p className="text-muted-foreground">Counts update when Anki on your computer finishes a sync. Sync, then press Refresh on the board.</p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="flex items-center gap-2 font-medium"><Link2 className="h-4 w-4 text-accent" aria-hidden /> My sign-in link did not work</h3>
-            <p className="text-muted-foreground">Links last two minutes and work once. Choose Tools → Open Leaderboard in Anki to get a new one.</p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="flex items-center gap-2 font-medium"><Trash2 className="h-4 w-4 text-accent" aria-hidden /> How do I delete my account?</h3>
-            <p className="text-muted-foreground">Sign in, open the menu with your name at the top right, choose Account, then Delete my account. This removes your name, history and board memberships.</p>
-          </div>
+          <Faq icon={RefreshCw} question="My count looks too low">
+            <p>Counts update when Anki on your computer finishes a sync. Sync, then press Refresh on the board.</p>
+          </Faq>
+          <Faq icon={Link2} question="My sign-in link did not work">
+            <p>Links last two minutes and work once. Choose Tools → Open Leaderboard in Anki to get a new one.</p>
+          </Faq>
+          <Faq icon={Trash2} question="How do I delete my account?">
+            <p>Sign in, open the menu with your name at the top right, choose Account, then Delete my account. This removes your name, history and board memberships.</p>
+          </Faq>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Something not working?</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-5">
+          <Faq icon={PackageX} question="I do not see Open Leaderboard in the Tools menu">
+            <p>The add-on is missing or Anki has not restarted since you installed it. Restart Anki first. If it is still missing, reinstall it:</p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>In Anki, choose <strong className="text-foreground">Tools → Add-ons</strong>, select <strong className="text-foreground">Anki Leaderboard</strong> and click <strong className="text-foreground">Delete</strong>.</li>
+              <li>Restart Anki.</li>
+              <li>Install the add-on again from the downloaded file (steps 1 and 2 above), and restart Anki once more.</li>
+            </ol>
+          </Faq>
+          <Faq icon={Unplug} question="It says it could not reach the leaderboard">
+            <p>
+              Check your internet connection, then check that <Code>server_url</Code> in the add-on&apos;s Config matches the address in step 3 above. The message
+              names the cause in brackets, such as a certificate problem. If it does, or if the problem started after an update, reinstall the newest add-on
+              file as above.
+            </p>
+          </Faq>
+          <Faq icon={RefreshCw} question="It says to sync Anki first">
+            <p>
+              The leaderboard creates your identity after your first finished sync, so press Sync in Anki (you need to be signed in to AnkiWeb in Anki), then try
+              again.
+            </p>
+          </Faq>
+          <Faq icon={Download} question="How do I update the add-on?">
+            <p>Download the newest file from the release page and install it the same way as the first time, then restart Anki and check that <Code>server_url</Code> is still set (step 3).</p>
+          </Faq>
         </CardContent>
       </Card>
     </>
