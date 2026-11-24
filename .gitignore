@@ -1,0 +1,16 @@
+__pycache__/
+.dev.vars
+.DS_Store
+.env
+.env.*
+.playwright-mcp/
+.pytest_cache/
+.venv/
+.wrangler/
+*.ankiaddon
+dist/
+node_modules/
+playwright-report/
+test-results/
+wrangler.deploy.jsonc
+.claude/
