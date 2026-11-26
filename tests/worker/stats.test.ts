@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { call, db, joinBoard, makeBoard, makeUser, today, type TestUser } from "./helpers";
 
-const GOOD = { days_studied: 12, retention_today: [40, 10], retention_week: [300, 60], retrievability: 0.87 };
+const GOOD = { days_studied: 12, retention_today: [40, 10], retention_week: [300, 60] };
 
 async function setup() {
   const admin = await makeUser("Admin");
@@ -29,7 +29,6 @@ describe("statistics sent with a push", () => {
       days_studied: 12,
       retention_today: { passed: 40, failed: 10 },
       retention_week: { passed: 300, failed: 60 },
-      retrievability: 0.87,
     });
     expect(Object.keys(row).filter((k) => k.startsWith("stats_"))).toEqual([]);
   });
@@ -48,10 +47,12 @@ describe("statistics sent with a push", () => {
     expect(row.stats.days_studied).toBe(12);
   });
 
-  it("accept a missing retrievability (Anki without FSRS)", async () => {
+  it("ignore fields they do not use, such as the retrievability add-on 1.1.0 sent", async () => {
     const { admin, member, board } = await setup();
-    await push(member, { ...GOOD, retrievability: null });
-    expect((await rowFor(admin, board.id, "Member")).stats.retrievability).toBeNull();
+    expect((await push(member, { ...GOOD, retrievability: null })).status).toBe(200);
+    const row = await rowFor(admin, board.id, "Member");
+    expect(row.stats.days_studied).toBe(12);
+    expect(row.stats).not.toHaveProperty("retrievability");
   });
 
   it("are ignored as a whole when invalid, and the review count is still accepted", async () => {
@@ -60,8 +61,6 @@ describe("statistics sent with a push", () => {
       { ...GOOD, days_studied: 31 },
       { ...GOOD, days_studied: -1 },
       { ...GOOD, days_studied: 1.5 },
-      { ...GOOD, retrievability: 1.5 },
-      { ...GOOD, retrievability: "high" },
       { ...GOOD, retention_today: [1] },
       { ...GOOD, retention_today: [10_000, 1] },
       { ...GOOD, retention_week: [-1, 0] },

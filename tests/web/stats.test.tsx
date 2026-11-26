@@ -7,7 +7,7 @@ const member = (name: string, stats: Member["stats"], over: Partial<Member> = {}
   rank: 1, user_id: name, display_name: name, role: "member", today: 0, week: 0, last_updated: null, is_me: false, stats, ...over,
 });
 const stats = (over: Partial<NonNullable<Member["stats"]>> = {}): NonNullable<Member["stats"]> => ({
-  days_studied: 10, retention_today: { passed: 40, failed: 10 }, retention_week: { passed: 90, failed: 10 }, retrievability: 0.85, ...over,
+  days_studied: 10, retention_today: { passed: 40, failed: 10 }, retention_week: { passed: 90, failed: 10 }, ...over,
 });
 
 const names = () => screen.getAllByTestId("stat-row").map((r) => r.textContent ?? "");
@@ -57,13 +57,12 @@ describe("StatsChart", () => {
 });
 
 describe("entryFor", () => {
-  it("scales days out of 30 and retrievability as a percentage", () => {
+  it("scales days out of 30 and retention as a percentage", () => {
     expect(entryFor("days", member("A", stats({ days_studied: 15 })))).toMatchObject({ percent: 50, text: "15 / 30" });
-    expect(entryFor("retrievability", member("A", stats({ retrievability: 0.874 })))).toMatchObject({ percent: 87.4, text: "87%" });
+    expect(entryFor("week", member("A", stats({ retention_week: { passed: 90, failed: 10 } })))).toMatchObject({ percent: 90, text: "90%" });
   });
 
   it("has no value when the statistic is missing", () => {
-    expect(entryFor("retrievability", member("A", stats({ retrievability: null }))).percent).toBeNull();
     expect(entryFor("today", member("A", stats({ retention_today: null }))).percent).toBeNull();
     expect(entryFor("today", member("A", stats({ retention_today: { passed: 0, failed: 0 } }))).percent).toBeNull();
     expect(entryFor("days", member("A", null)).percent).toBeNull();

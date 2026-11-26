@@ -54,8 +54,6 @@ def summarise_graphs(g: Any) -> Optional[dict]:
 
     - days_studied: days in the last 30 (today included) on which any answer was recorded.
     - retention_today / retention_week: [passed, failed] review answers, from Anki's "true retention" figures.
-    - retrievability: Anki's current average as a fraction from 0 to 1, or None unless FSRS is on. Anki reports it as a
-      percentage (0 to 100), so it is divided by 100 here.
     """
     try:
         t = g.true_retention
@@ -68,12 +66,10 @@ def summarise_graphs(g: Any) -> Optional[dict]:
             for offset, r in g.reviews.count.items()
             if -STATS_DAYS < offset <= 0 and (r.learn + r.relearn + r.young + r.mature + r.filtered) > 0
         )
-        average = float(g.retrievability.average)
         return {
             "days_studied": days,
             "retention_today": passed_failed(t.today),
             "retention_week": passed_failed(t.week),
-            "retrievability": average / 100 if g.fsrs and 0 < average <= 100 else None,
         }
     except (AttributeError, TypeError, ValueError):
         return None

@@ -75,5 +75,5 @@ def test_a_new_database_gets_the_same_final_shape():
     cols = [row[1] for row in db.execute("PRAGMA table_info(users)")]
     assert cols == [
         "id", "display_name", "created_at", "last_active_date", "last_push_at", "recovery_hash", "recovery_created_at",
-        "stats_date", "stats_days", "stats_today_passed", "stats_today_failed", "stats_week_passed", "stats_week_failed", "stats_retrievability",
+        "stats_date", "stats_days", "stats_today_passed", "stats_today_failed", "stats_week_passed", "stats_week_failed",
     ]

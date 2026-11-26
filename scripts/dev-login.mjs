@@ -25,7 +25,6 @@ const stats = {
   days_studied: pick(30),
   retention_today: [Math.round(today * 0.85), today - Math.round(today * 0.85)],
   retention_week: [Math.round(week * 0.85), week - Math.round(week * 0.85)],
-  retrievability: Math.random() < 0.7 ? 0.7 + Math.random() * 0.25 : null,
 };
 await post("/api/sync", { local_date: local, review_count: reviews, stats });
 const { token } = await post("/api/login-link", {});

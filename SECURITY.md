@@ -28,7 +28,7 @@ Out of scope:
 
 ## Data and privacy
 
-Each person's data is a display name, the number of cards reviewed per day, a few Anki statistics (days studied in the last 30 days, passed and failed review answers today and over 7 days, and average retrievability), their board memberships and roles, and timestamps. No passwords, emails, AnkiWeb logins or card content are stored, and each computer's key is kept only as a hash. Members of a board see that board's names and counts. Nobody sees boards they are not in.
+Each person's data is a display name, the number of cards reviewed per day, a few Anki statistics (days studied in the last 30 days, passed and failed review answers today and over 7 days), their board memberships and roles, and timestamps. No passwords, emails, AnkiWeb logins or card content are stored, and each computer's key is kept only as a hash. Members of a board see that board's names and counts. Nobody sees boards they are not in.
 
 Whoever runs a server can read everything stored in its database through their Cloudflare account. If you use someone else's server, they can see your display name, counts and statistics. The default display name is your Anki profile name, which you can change on the Account page. Inactive accounts are deleted after 12 months, and you can delete your account at any time.
 

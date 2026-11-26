@@ -1,13 +1,12 @@
 import { useState } from "react";
 import type { Member } from "../api";
 
-type StatId = "days" | "today" | "week" | "retrievability";
+type StatId = "days" | "today" | "week";
 
 const OPTIONS: { id: StatId; label: string }[] = [
   { id: "days", label: "Days studied (last 30 days)" },
   { id: "today", label: "Retention today" },
   { id: "week", label: "Retention, last 7 days" },
-  { id: "retrievability", label: "Average retrievability" },
 ];
 
 /** Below this many review answers a retention figure is mostly noise, so it is drawn fainter. */
@@ -36,9 +35,7 @@ export function entryFor(id: StatId, m: Member): Entry {
   if (!s) return NONE;
   if (id === "days") return { percent: (s.days_studied / 30) * 100, text: `${s.days_studied} / 30` };
   if (id === "today") return retention(s.retention_today);
-  if (id === "week") return retention(s.retention_week);
-  if (s.retrievability === null) return NONE;
-  return { percent: s.retrievability * 100, text: `${Math.round(s.retrievability * 100)}%` };
+  return retention(s.retention_week);
 }
 
 /** One horizontal bar per member for the chosen Anki statistic, highest first. */
@@ -97,7 +94,7 @@ export function StatsChart({ members }: { members: Member[] }) {
       </ol>
       <p className="text-sm text-muted-foreground">
         These come from Anki&apos;s own statistics and update when each member syncs. A dash means not available: the member has not updated the add-on, or
-        (for retrievability) FSRS is off.
+        has no reviews of that kind.
       </p>
     </div>
   );

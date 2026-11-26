@@ -89,7 +89,7 @@ export async function sync(c: Ctx): Promise<Response> {
     stats
       ? c.env.DB.prepare(
           `UPDATE users SET last_push_at = ?, last_active_date = ?, stats_date = ?, stats_days = ?, stats_today_passed = ?,
-             stats_today_failed = ?, stats_week_passed = ?, stats_week_failed = ?, stats_retrievability = ? WHERE id = ?`,
+             stats_today_failed = ?, stats_week_passed = ?, stats_week_failed = ? WHERE id = ?`,
         ).bind(
           c.now,
           utcDate(c.now),
@@ -99,7 +99,6 @@ export async function sync(c: Ctx): Promise<Response> {
           stats.retention_today[1],
           stats.retention_week[0],
           stats.retention_week[1],
-          stats.retrievability,
           user.id,
         )
       : c.env.DB.prepare("UPDATE users SET last_push_at = ?, last_active_date = ? WHERE id = ?").bind(c.now, utcDate(c.now), user.id),
