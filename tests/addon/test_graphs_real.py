@@ -38,3 +38,26 @@ def test_real_graphs_response_is_summarised(tmp_path):
     finally:
         col.close()
     assert summary == {"days_studied": 3, "retention_today": [3, 1], "retention_week": [5, 1], "retrievability": None}
+
+
+def test_real_retrievability_is_a_percentage_that_becomes_a_fraction(tmp_path):
+    col = Collection(str(tmp_path / "c.anki2"))
+    try:
+        deck = col.decks.id("Test")
+        for i in range(6):
+            note = col.new_note(col.models.by_name("Basic"))
+            note["Front"], note["Back"] = f"q{i}", "a"
+            col.add_note(note, deck)
+        col.decks.select(deck)
+        col.set_config("fsrs", True)
+        for _ in range(3):
+            for _ in range(6):
+                card = col.sched.getCard()
+                if card:
+                    col.sched.answerCard(card, 3)
+        graphs = col._backend.graphs(search="", days=STATS_DAYS)
+        assert graphs.fsrs and graphs.retrievability.average > 1  # Anki reports a percentage
+        summary = summarise_graphs(graphs)
+    finally:
+        col.close()
+    assert 0.5 < summary["retrievability"] <= 1

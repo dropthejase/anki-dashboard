@@ -598,13 +598,13 @@ def graphs(today=(0, 0, 0, 0), week=(0, 0, 0, 0), days=None, fsrs=False, average
 
 class TestSummariseGraphs:
     def test_adds_young_and_mature_and_counts_days_studied(self):
-        g = graphs(today=(3, 1, 2, 0), week=(10, 2, 20, 3), days={0: 5, -3: 8, -29: 1, -30: 9, -45: 4, -5: 0}, fsrs=True, average=0.87)
+        g = graphs(today=(3, 1, 2, 0), week=(10, 2, 20, 3), days={0: 5, -3: 8, -29: 1, -30: 9, -45: 4, -5: 0}, fsrs=True, average=87.0)
         assert summarise_graphs(g) == {"days_studied": 3, "retention_today": [5, 1], "retention_week": [30, 5], "retrievability": 0.87}
 
     def test_a_future_or_older_day_never_counts(self):
         assert summarise_graphs(graphs(days={1: 3, -30: 3, -31: 3}))["days_studied"] == 0
 
-    @pytest.mark.parametrize("fsrs, average", [(False, 0.9), (True, 0.0), (True, 1.5)])
+    @pytest.mark.parametrize("fsrs, average", [(False, 90.0), (True, 0.0), (True, 150.0)])
     def test_retrievability_is_sent_only_when_fsrs_gives_a_sensible_value(self, fsrs, average):
         assert summarise_graphs(graphs(fsrs=fsrs, average=average))["retrievability"] is None
 
