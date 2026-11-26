@@ -589,24 +589,20 @@ class TestDeviceLabel:
         assert label == expected and len(label) <= 30
 
 
-def graphs(today=(0, 0, 0, 0), week=(0, 0, 0, 0), days=None, fsrs=False, average=0.0):
+def graphs(today=(0, 0, 0, 0), week=(0, 0, 0, 0), days=None):
     """A stand-in for Anki's graphs response. Retention tuples are (young passed, young failed, mature passed, mature failed)."""
     tr = lambda v: NS(young_passed=v[0], young_failed=v[1], mature_passed=v[2], mature_failed=v[3])
     counts = {k: NS(learn=n, relearn=0, young=0, mature=0, filtered=0) for k, n in (days or {}).items()}
-    return NS(true_retention=NS(today=tr(today), week=tr(week)), reviews=NS(count=counts), fsrs=fsrs, retrievability=NS(average=average))
+    return NS(true_retention=NS(today=tr(today), week=tr(week)), reviews=NS(count=counts))
 
 
 class TestSummariseGraphs:
     def test_adds_young_and_mature_and_counts_days_studied(self):
-        g = graphs(today=(3, 1, 2, 0), week=(10, 2, 20, 3), days={0: 5, -3: 8, -29: 1, -30: 9, -45: 4, -5: 0}, fsrs=True, average=0.87)
-        assert summarise_graphs(g) == {"days_studied": 3, "retention_today": [5, 1], "retention_week": [30, 5], "retrievability": 0.87}
+        g = graphs(today=(3, 1, 2, 0), week=(10, 2, 20, 3), days={0: 5, -3: 8, -29: 1, -30: 9, -45: 4, -5: 0})
+        assert summarise_graphs(g) == {"days_studied": 3, "retention_today": [5, 1], "retention_week": [30, 5]}
 
     def test_a_future_or_older_day_never_counts(self):
         assert summarise_graphs(graphs(days={1: 3, -30: 3, -31: 3}))["days_studied"] == 0
-
-    @pytest.mark.parametrize("fsrs, average", [(False, 0.9), (True, 0.0), (True, 1.5)])
-    def test_retrievability_is_sent_only_when_fsrs_gives_a_sensible_value(self, fsrs, average):
-        assert summarise_graphs(graphs(fsrs=fsrs, average=average))["retrievability"] is None
 
     def test_an_unexpected_response_gives_none(self):
         assert summarise_graphs(NS()) is None
@@ -615,7 +611,7 @@ class TestSummariseGraphs:
 
 
 class TestPushStats:
-    STATS = {"days_studied": 9, "retention_today": [4, 1], "retention_week": [30, 5], "retrievability": None}
+    STATS = {"days_studied": 9, "retention_today": [4, 1], "retention_week": [30, 5]}
 
     def test_sends_the_statistics_with_the_count(self):
         a = FakeAdapter(secret=GOOD_SECRET)

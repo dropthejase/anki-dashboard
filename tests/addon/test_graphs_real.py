@@ -37,4 +37,5 @@ def test_real_graphs_response_is_summarised(tmp_path):
         summary = summarise_graphs(col._backend.graphs(search="", days=STATS_DAYS))
     finally:
         col.close()
-    assert summary == {"days_studied": 3, "retention_today": [3, 1], "retention_week": [5, 1], "retrievability": None}
+    assert summary == {"days_studied": 3, "retention_today": [3, 1], "retention_week": [5, 1]}
+

@@ -60,7 +60,6 @@ export interface MemberStats {
   days_studied: number;
   retention_today: { passed: number; failed: number } | null;
   retention_week: { passed: number; failed: number };
-  retrievability: number | null;
 }
 export interface Member {
   rank: number;

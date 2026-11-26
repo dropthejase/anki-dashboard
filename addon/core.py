@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Optional, Protocol
 from urllib.parse import urlparse
 
-ADDON_VERSION = "1.1.0"  # keep in step with ADDON_LATEST_VERSION in wrangler.jsonc when releasing (docs/RELEASING.md)
+ADDON_VERSION = "1.1.1"  # keep in step with ADDON_LATEST_VERSION in wrangler.jsonc when releasing (docs/RELEASING.md)
 SECRET_KEY = "leaderboard_secret"  # where v0.2.x kept the key, in the synced collection. Now only removed, never read.
 REGISTERED_KEY = "registered"  # machine-local: has the server ever accepted this computer?
 STATE_KEY = "last_pushed"  # machine-local, never synced
@@ -54,7 +54,6 @@ def summarise_graphs(g: Any) -> Optional[dict]:
 
     - days_studied: days in the last 30 (today included) on which any answer was recorded.
     - retention_today / retention_week: [passed, failed] review answers, from Anki's "true retention" figures.
-    - retrievability: Anki's current average, or None unless FSRS is on.
     """
     try:
         t = g.true_retention
@@ -67,12 +66,10 @@ def summarise_graphs(g: Any) -> Optional[dict]:
             for offset, r in g.reviews.count.items()
             if -STATS_DAYS < offset <= 0 and (r.learn + r.relearn + r.young + r.mature + r.filtered) > 0
         )
-        average = float(g.retrievability.average)
         return {
             "days_studied": days,
             "retention_today": passed_failed(t.today),
             "retention_week": passed_failed(t.week),
-            "retrievability": average if g.fsrs and 0 < average <= 1 else None,
         }
     except (AttributeError, TypeError, ValueError):
         return None

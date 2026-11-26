@@ -81,7 +81,6 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
        SELECT ROW_NUMBER() OVER (ORDER BY ${order}) AS rank, * FROM (
          SELECT u.id AS user_id, u.display_name, m.role, m.joined_at,
                 u.stats_date, u.stats_days, u.stats_today_passed, u.stats_today_failed, u.stats_week_passed, u.stats_week_failed,
-                u.stats_retrievability,
                 COALESCE(SUM(CASE WHEN d.local_date = ?2 THEN d.review_count END), 0) AS today,
                 COALESCE(SUM(d.review_count), 0) AS week,
                 MAX(d.updated_at) AS last_updated
@@ -106,7 +105,6 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
       stats_today_failed: number | null;
       stats_week_passed: number | null;
       stats_week_failed: number | null;
-      stats_retrievability: number | null;
     }>();
   // Statistics older than the board's 7-day window are left out. Today's retention only counts if it was sent today.
   const freshFrom = addDays(date, -6);
@@ -129,7 +127,7 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
     date,
     join_path: showInvite && board.invite_enabled === 1 ? await joinPath(c, board) : null,
     members: members.results.map(
-      ({ stats_date, stats_days, stats_today_passed, stats_today_failed, stats_week_passed, stats_week_failed, stats_retrievability, ...m }) => ({
+      ({ stats_date, stats_days, stats_today_passed, stats_today_failed, stats_week_passed, stats_week_failed, ...m }) => ({
         ...m,
         is_me: m.user_id === user.id,
         stats:
@@ -141,7 +139,6 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
                     ? { passed: stats_today_passed, failed: stats_today_failed }
                     : null,
                 retention_week: { passed: stats_week_passed, failed: stats_week_failed },
-                retrievability: stats_retrievability,
               }
             : null,
       }),

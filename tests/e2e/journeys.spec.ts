@@ -36,7 +36,7 @@ test("sign-in shows an interstitial, clears the token, and the link is single us
 });
 
 test("create a board, invite through the link, and see counts and admin controls", async ({ browser, request }) => {
-  const alice = await newUser(request, "Alice", 120, { days_studied: 21, retention_today: [45, 5], retention_week: [300, 40], retrievability: 0.9 });
+  const alice = await newUser(request, "Alice", 120, { days_studied: 21, retention_today: [45, 5], retention_week: [300, 40] });
   const bob = await newUser(request, "Bob", 45);
   const alicePage = await signedIn(browser, alice);
 
