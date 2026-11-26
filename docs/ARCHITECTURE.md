@@ -50,7 +50,7 @@ All times are Unix milliseconds. Dates are `YYYY-MM-DD` text. Every token is sto
 
 | Table | Purpose |
 |---|---|
-| `users` | `id` (random 128-bit hex), `display_name`, `created_at`, `last_active_date`, `last_push_at`, and optionally `recovery_hash` and `recovery_created_at` |
+| `users` | `id` (random 128-bit hex), `display_name`, `created_at`, `last_active_date`, `last_push_at`, optionally `recovery_hash` and `recovery_created_at`, and the latest Anki statistics from a push (`stats_date`, `stats_days`, `stats_today_passed`, `stats_today_failed`, `stats_week_passed`, `stats_week_failed`, `stats_retrievability`) |
 | `devices` | One row per computer: `user_id`, `secret_hash` (the key's hash), `label`, `created_at`, `last_seen_at` |
 | `link_codes` | Hash of a code that adds a computer, with its expiry and `used_at` |
 | `daily_stats` | One row per `(user_id, local_date)` with `review_count` (0 to 10,000). Upserted with `MAX(existing, new)`. The daily purge deletes rows older than 10 days, because the board reads at most the last 8. |
@@ -66,6 +66,8 @@ One push serves every board a user is in, because boards read from `daily_stats`
 ## Review counts
 
 The add-on counts answers in the local review log since Anki's day cutoff ("next day starts at"), excluding manual and rescheduled entries. That matches Anki's own "Today" figure (ADR 0003). It pushes only today's count, with the user's local date. The server accepts dates within two days of its own UTC date, caps a day at 10,000, and allows one push per user every 30 minutes. Counts come from the client and can be faked within the cap.
+
+Version 1.1 of the add-on also sends a few of Anki's own statistics with each push, read from the backend call behind Anki's Statistics screen (`col._backend.graphs`, over the whole collection, 30 days): days studied in the last 30 (days with any answer), passed and failed review answers today and over 7 days (Anki's "true retention" figures), and Anki's average retrievability, which is only sent when FSRS is on. The call is not a public interface, so if it fails or has a different shape the add-on sends no statistics and the count still goes. The server range-checks them and ignores the whole object if any part is invalid. They are stored on the `users` row that the push already updates, so they cost no extra rows written. The board view returns them per member, leaves out today's retention unless it was sent today, and leaves out all of them when they are more than seven days old. The Stats tab ranks nothing: it charts one chosen statistic for the members the board view returned (the same top 100 as the Today tab, plus the caller).
 
 ## Recovery code
 
@@ -135,6 +137,7 @@ Every push runs the Worker, web and add-on tests. A push to `main` also runs the
 
 - The daily cron. Its schedule registered on the free plan at the first deploy, but the first scheduled run has not been observed yet. Also D1 backup and restore options, and AnkiWeb upload eligibility and multi-factor support for the publishing account.
 - The add-on has been run in real Anki Desktop on macOS only. Windows and Linux are untested.
+- The statistics (add-on 1.1). They were checked against the `anki` Python package (Anki 26.09.4), including a test that builds real review history and reads it back, but not yet inside a running Anki Desktop, and not on older Anki versions. If an Anki version lacks the fields, members on it show a dash.
 - The dashboard route (Option B) in `docs/INSTALL.md`. The command-line route (Option A) was run on a live account on 2026-11-23, followed by a smoke test of registration, sync, sign-in, boards, invites and account deletion.
 
 ## Open decisions

@@ -30,7 +30,7 @@ export function Home() {
         <CardContent className="flex flex-col gap-3">
           <p>
             Compare how many cards you review each day with your friends. You need the free Anki Leaderboard add-on. It runs in Anki on a computer, not on a
-            phone, and it only shares your daily review count.
+            phone. It shares your daily review count and a few Anki statistics, such as days studied and retention. It never shares your cards.
           </p>
           <ol className="list-decimal space-y-1 pl-5">
             <li>

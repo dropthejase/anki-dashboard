@@ -56,6 +56,12 @@ export interface Device {
   created_at: number;
   last_seen_at: number | null;
 }
+export interface MemberStats {
+  days_studied: number;
+  retention_today: { passed: number; failed: number } | null;
+  retention_week: { passed: number; failed: number };
+  retrievability: number | null;
+}
 export interface Member {
   rank: number;
   user_id: string;
@@ -65,6 +71,7 @@ export interface Member {
   week: number;
   last_updated: number | null;
   is_me: boolean;
+  stats: MemberStats | null;
 }
 export interface BoardView {
   board: { id: string; name: string; image_version: number | null; invite_enabled: boolean; member_cap: number | null;

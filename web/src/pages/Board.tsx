@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, errorText, type BoardView, type Member } from "../api";
 import { useSession } from "../App";
 import { BoardStats } from "../components/BoardStats";
-import { RankTabs, type RankBy } from "../components/RankTabs";
+import { RankTabs, type BoardTab, type RankBy } from "../components/RankTabs";
+import { StatsChart } from "../components/StatsChart";
 import { InvitePanel } from "../components/InvitePanel";
 import { BoardPicture } from "../components/BoardPicture";
 import { PictureEditor } from "../components/PictureEditor";
@@ -27,13 +28,16 @@ export function Board({ id }: { id: string }) {
   const [cooling, setCooling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [by, setBy] = useState<RankBy>(() => {
+  const [tab, setTab] = useState<BoardTab>(() => {
     try {
-      return localStorage.getItem("rank-by") === "week" ? "week" : "today";
+      const saved = localStorage.getItem("rank-by");
+      return saved === "week" || saved === "stats" ? saved : "today";
     } catch {
       return "today";
     }
   });
+  // The Stats tab lists members in the order of the Today ranking, so it needs no separate fetch.
+  const by: RankBy = tab === "week" ? "week" : "today";
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -138,9 +142,9 @@ export function Board({ id }: { id: string }) {
         <CardContent>
           {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
           <RankTabs
-            value={by}
+            value={tab}
             onChange={(next) => {
-              setBy(next);
+              setTab(next);
               try {
                 localStorage.setItem("rank-by", next);
               } catch {
@@ -148,7 +152,13 @@ export function Board({ id }: { id: string }) {
               }
             }}
           />
-          {!view ? <LeaderboardSkeleton /> : <Leaderboard members={view.members} by={by} actions={isAdmin ? memberActions : undefined} />}
+          {!view ? (
+            <LeaderboardSkeleton />
+          ) : tab === "stats" ? (
+            <StatsChart members={view.members} />
+          ) : (
+            <Leaderboard members={view.members} by={by} actions={isAdmin ? memberActions : undefined} />
+          )}
           <p className="mt-4 text-sm text-muted-foreground">
             Counts update when each member syncs Anki Desktop. Phone reviews count only if the phone and then Anki Desktop are synced the same day.
           </p>

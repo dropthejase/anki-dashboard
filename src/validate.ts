@@ -59,3 +59,32 @@ export function plausibleDate(date: string, now: number): boolean {
   const diff = Math.abs(new Date(`${date}T00:00:00Z`).getTime() - new Date(`${utcDate(now)}T00:00:00Z`).getTime());
   return diff <= 2 * DAY_MS;
 }
+
+export interface Stats {
+  days_studied: number;
+  retention_today: [number, number];
+  retention_week: [number, number];
+  retrievability: number | null;
+}
+
+const isCount = (v: unknown, max: number): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
+
+function pair(v: unknown, max: number): [number, number] | null {
+  if (!Array.isArray(v) || v.length !== 2) return null;
+  const [passed, failed] = v;
+  return isCount(passed, max) && isCount(failed, max) && passed + failed <= max ? [passed, failed] : null;
+}
+
+/** Checks the optional statistics an add-on sends: days studied in the last 30, passed and failed review answers today
+ *  and in the last 7 days, and Anki's average retrievability (0 to 1, or null when it is not available). Anything that
+ *  does not fit is ignored as a whole, so a glitch in the statistics never blocks the review count. */
+export function parseStats(v: unknown): Stats | null {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return null;
+  const s = v as Record<string, unknown>;
+  const today = pair(s.retention_today, MAX_REVIEWS_PER_DAY);
+  const week = pair(s.retention_week, 7 * MAX_REVIEWS_PER_DAY);
+  const r = s.retrievability ?? null;
+  const retrievability = r === null ? null : typeof r === "number" && Number.isFinite(r) && r >= 0 && r <= 1 ? r : undefined;
+  if (!isCount(s.days_studied, 30) || !today || !week || retrievability === undefined) return null;
+  return { days_studied: s.days_studied, retention_today: today, retention_week: week, retrievability };
+}

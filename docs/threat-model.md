@@ -48,7 +48,7 @@ flowchart LR
 | Login links and session cookies | Grant website access as that user. |
 | Server HMAC key | Forges invite links for every board. |
 | Board membership and roles | Privacy of private boards and admin control. |
-| Review counts, display names | Low sensitivity, but personal data under UK GDPR. |
+| Review counts, Anki statistics, display names | Low sensitivity, but personal data under UK GDPR. |
 | Add-on distribution account | A malicious update would run inside every user's Anki. |
 | Free-tier budget | Exhaustion causes an outage. |
 
@@ -63,7 +63,7 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | ID | Where | Threat | STRIDE |
 |---|---|---|---|
 | T1 | Identity secret | Secret stolen from AnkiWeb, a collection backup, another add-on, logs, or traffic, then used to impersonate the user or their admin role. | S, E |
-| T2 | Sync | Forged or inflated review counts. | T |
+| T2 | Sync | Forged or inflated review counts or statistics. | T |
 | T3 | Registration and sync | Scripted flood of registrations or syncs exhausts the free-tier budget. | D |
 | T4 | Login link | Link intercepted, replayed or guessed. | S |
 | T5 | Login link | Victim opens an attacker's link and is signed in as the attacker (login CSRF). | S |
@@ -107,7 +107,7 @@ STRIDE: Spoofing, Tampering, Repudiation, Information disclosure, Denial of serv
 | ID | Mitigation | Reference | Test |
 |---|---|---|---|
 | T1 | Store only a hash server-side. Never log secrets. Provide Reset this computer's key (Leaderboard Settings) to rotate the secret. Use HTTPS only. Accept residual exposure via AnkiWeb and other add-ons. | Design | Rotated secret stops working. Only hashes stored. |
-| T2 | Sanity cap of 10,000 reviews per day, 30-minute push interval, and the `MAX` upsert. Spoofing within the cap is accepted. | Design | Over-cap rejected. Upsert keeps the maximum. |
+| T2 | Sanity cap of 10,000 reviews per day, 30-minute push interval, and the `MAX` upsert. Statistics are range-checked, and ignored as a whole when invalid. Spoofing within the caps is accepted. | Design | Over-cap rejected. Upsert keeps the maximum. |
 | T3 | Rate limits on register, sync, link creation and join. Purge never-activated identities after 30 days. Outage on exhaustion is accepted. | Design | Rate limits trigger. Purge removes only the right rows. |
 | T4 | 128-bit random link, valid about two minutes, single use, stored as a hash. | Design | Expired and reused links rejected. |
 | T5 | The landing page shows an interstitial naming the account ("Sign in as <display name>?"), and the UI always shows who is signed in. If a session for another account already exists, ask before switching. Residual impact is low. | Design | Interstitial shown before a session is created. |

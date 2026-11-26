@@ -11,10 +11,10 @@ async function signedIn(browser: Browser, anki: FakeAnki): Promise<Page> {
   return page;
 }
 
-async function newUser(request: import("@playwright/test").APIRequestContext, name: string, reviews?: number) {
+async function newUser(request: import("@playwright/test").APIRequestContext, name: string, reviews?: number, stats?: Record<string, unknown>) {
   const anki = new FakeAnki(request, name);
   await anki.register();
-  if (reviews !== undefined) await anki.sync(reviews);
+  if (reviews !== undefined) await anki.sync(reviews, stats);
   return anki;
 }
 
@@ -36,7 +36,7 @@ test("sign-in shows an interstitial, clears the token, and the link is single us
 });
 
 test("create a board, invite through the link, and see counts and admin controls", async ({ browser, request }) => {
-  const alice = await newUser(request, "Alice", 120);
+  const alice = await newUser(request, "Alice", 120, { days_studied: 21, retention_today: [45, 5], retention_week: [300, 40], retrievability: 0.9 });
   const bob = await newUser(request, "Bob", 45);
   const alicePage = await signedIn(browser, alice);
 
@@ -71,6 +71,17 @@ test("create a board, invite through the link, and see counts and admin controls
   await expect(bobPage.getByRole("tab", { name: "7 days" })).toHaveAttribute("aria-selected", "true");
   await expect(rows.nth(0).getByTestId("week")).toHaveText("120");
   await expect(rows.nth(1).getByTestId("week")).toHaveText("45");
+  // The Stats tab charts Anki statistics. Alice sent some, Bob did not.
+  await bobPage.getByRole("tab", { name: "Stats" }).click();
+  const statRows = bobPage.getByTestId("stat-row");
+  await expect(statRows).toHaveCount(2);
+  await expect(statRows.nth(0)).toContainText("Alice");
+  await expect(statRows.nth(0).getByTestId("stat-value")).toHaveText("21 / 30");
+  await expect(statRows.nth(1)).toContainText("Bob");
+  await expect(statRows.nth(1).getByTestId("stat-value")).toHaveText("\u2014");
+  await bobPage.getByLabel("Statistic").selectOption("week");
+  await expect(statRows.nth(0).getByTestId("stat-value")).toContainText("88%");
+  await bobPage.getByRole("tab", { name: "Today" }).click();
   await bobPage.getByRole("button", { name: "Board options" }).click();
   await expect(bobPage.getByRole("menuitem", { name: "Leave board" })).toBeVisible();
   await expect(bobPage.getByRole("menuitem", { name: "Board settings" })).toHaveCount(0); // members get no admin UI

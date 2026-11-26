@@ -7,7 +7,7 @@ import sqlite3  # noqa: F401  (documentation: the collection DB is SQLite)
 from pathlib import Path
 from typing import Any, Optional
 
-from .core import COUNT_SQL, SECRET_KEY, FileSecretStore, anki_day, make_device_label
+from .core import COUNT_SQL, SECRET_KEY, STATS_DAYS, FileSecretStore, anki_day, make_device_label, summarise_graphs
 
 
 class AnkiAdapter:
@@ -49,6 +49,14 @@ class AnkiAdapter:
         cutoff = self.mw.col.sched.day_cutoff
         count = self.mw.col.db.scalar(COUNT_SQL, (cutoff - 86400) * 1000)
         return anki_day(cutoff), int(count or 0)
+
+    def stats(self) -> Optional[dict]:
+        """Anki's own statistics for the whole collection. `_backend.graphs` is what the Statistics screen calls. It is
+        not a public interface, so any failure (an Anki version without it, for example) just means no statistics."""
+        try:
+            return summarise_graphs(self.mw.col._backend.graphs(search="", days=STATS_DAYS))
+        except Exception:
+            return None
 
     def profile_name(self) -> str:
         return self.mw.pm.name or "Anki user"
