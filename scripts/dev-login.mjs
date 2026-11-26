@@ -17,6 +17,16 @@ const post = async (path, body) => {
 await post("/api/register", { display_name: name });
 const d = new Date();
 const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-await post("/api/sync", { local_date: local, review_count: reviews });
+// Made-up Anki statistics, so the Stats tab has something to show.
+const pick = (max) => Math.floor(Math.random() * (max + 1));
+const today = pick(120);
+const week = today + pick(600);
+const stats = {
+  days_studied: pick(30),
+  retention_today: [Math.round(today * 0.85), today - Math.round(today * 0.85)],
+  retention_week: [Math.round(week * 0.85), week - Math.round(week * 0.85)],
+  retrievability: Math.random() < 0.7 ? 0.7 + Math.random() * 0.25 : null,
+};
+await post("/api/sync", { local_date: local, review_count: reviews, stats });
 const { token } = await post("/api/login-link", {});
 console.log(`${name} (${reviews} reviews today). Open within 2 minutes:\n${base}/signin#${token}`);
