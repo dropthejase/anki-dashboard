@@ -88,8 +88,8 @@ export function Join() {
         <CardHeader><CardTitle>You have been invited to a private Anki leaderboard</CardTitle></CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           <p>
-            To join, you need the free Anki Leaderboard add-on. It runs in Anki on a computer, not on a phone, and it only shares how many cards you review each
-            day.
+            To join, you need the free Anki Leaderboard add-on. It runs in Anki on a computer, not on a phone. It shares how many cards you review each day and
+            a few Anki statistics, such as days studied and retention. It never shares your cards.
           </p>
           <ol className="list-decimal space-y-1 pl-5">
             <li>

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Optional, Protocol
 from urllib.parse import urlparse
 
-ADDON_VERSION = "1.0.0"  # keep in step with ADDON_LATEST_VERSION in wrangler.jsonc when releasing (docs/RELEASING.md)
+ADDON_VERSION = "1.1.0"  # keep in step with ADDON_LATEST_VERSION in wrangler.jsonc when releasing (docs/RELEASING.md)
 SECRET_KEY = "leaderboard_secret"  # where v0.2.x kept the key, in the synced collection. Now only removed, never read.
 REGISTERED_KEY = "registered"  # machine-local: has the server ever accepted this computer?
 STATE_KEY = "last_pushed"  # machine-local, never synced
@@ -40,6 +40,42 @@ COUNT_SQL = "SELECT COUNT() FROM revlog WHERE id > ? AND type != 4 AND type != 5
 def count_reviews(db: sqlite3.Connection, day_cutoff: int) -> int:
     """`day_cutoff` is the Unix time (seconds) at which the next Anki day starts."""
     return int(db.execute(COUNT_SQL, ((day_cutoff - 86400) * 1000,)).fetchone()[0])
+
+
+# Anki's own statistics (the backend call behind its Statistics screen) over the whole collection. 30 days is enough for
+# "days studied" and for the week and today retention figures.
+STATS_DAYS = 30
+
+
+def summarise_graphs(g: Any) -> Optional[dict]:
+    """Turns Anki's graphs response into the small dict the server accepts, or None if it is not what we expect (for
+    example an Anki version without these fields). Nothing here is computed by us beyond counting days and adding the
+    young and mature figures Anki already reports.
+
+    - days_studied: days in the last 30 (today included) on which any answer was recorded.
+    - retention_today / retention_week: [passed, failed] review answers, from Anki's "true retention" figures.
+    - retrievability: Anki's current average, or None unless FSRS is on.
+    """
+    try:
+        t = g.true_retention
+
+        def passed_failed(r: Any) -> list[int]:
+            return [int(r.young_passed + r.mature_passed), int(r.young_failed + r.mature_failed)]
+
+        days = sum(
+            1
+            for offset, r in g.reviews.count.items()
+            if -STATS_DAYS < offset <= 0 and (r.learn + r.relearn + r.young + r.mature + r.filtered) > 0
+        )
+        average = float(g.retrievability.average)
+        return {
+            "days_studied": days,
+            "retention_today": passed_failed(t.today),
+            "retention_week": passed_failed(t.week),
+            "retrievability": average if g.fsrs and 0 < average <= 1 else None,
+        }
+    except (AttributeError, TypeError, ValueError):
+        return None
 
 
 MAX_NAME_CHARS = 30
@@ -391,7 +427,10 @@ class Leaderboard:
         local_date, count = self.a.today()
         if not force and self.a.get_local(STATE_KEY) == [local_date, count]:
             return Result(True, "Leaderboard already up to date.")
-        body = {"local_date": local_date, "review_count": count}
+        body: dict = {"local_date": local_date, "review_count": count}
+        stats = self._stats()
+        if stats is not None:
+            body["stats"] = stats
         try:
             status, data = self.t.post("/api/sync", secret, body)
             if status == 401 and data.get("error") == "unknown_identity":
@@ -408,6 +447,13 @@ class Leaderboard:
         if status == 429:
             return Result(False, "Leaderboard updates are limited to one every 30 minutes. Try again later. And get back to revising!", limited=True)
         return Result(False, "The leaderboard could not accept the update.")
+
+    def _stats(self) -> Optional[dict]:
+        """Anki's statistics for the push, or None. A problem reading them never stops the review count being sent."""
+        try:
+            return self.a.stats() if hasattr(self.a, "stats") else None
+        except Exception:
+            return None
 
     def _update_notice(self, latest: Any, always: bool) -> Optional[str]:
         """Tells the user once per release when the server reports a newer add-on. The server only supplies a version

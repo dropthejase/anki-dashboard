@@ -49,12 +49,12 @@ export class FakeAnki {
     return r.json();
   }
 
-  async sync(reviewCount: number) {
+  async sync(reviewCount: number, stats?: Record<string, unknown>) {
     const d = new Date();
     const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const r = await this.request.post("/api/sync", {
       headers: this.headers(),
-      data: { local_date: local, review_count: reviewCount },
+      data: { local_date: local, review_count: reviewCount, ...(stats ? { stats } : {}) },
     });
     if (!r.ok()) throw new Error(`sync failed: ${r.status()}`);
   }

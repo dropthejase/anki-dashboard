@@ -6,7 +6,7 @@ import { applyTheme, storedTheme } from "../../web/src/lib/theme";
 import { timeAgo } from "../../web/src/lib/utils";
 
 const m = (over: Partial<Member>): Member => ({
-  rank: 1, user_id: "u", display_name: "A", role: "member", today: 0, week: 0, last_updated: null, is_me: false, ...over,
+  rank: 1, user_id: "u", display_name: "A", role: "member", today: 0, week: 0, last_updated: null, is_me: false, stats: null, ...over,
 });
 
 describe("Leaderboard", () => {

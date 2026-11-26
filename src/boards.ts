@@ -80,6 +80,8 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
     `SELECT * FROM (
        SELECT ROW_NUMBER() OVER (ORDER BY ${order}) AS rank, * FROM (
          SELECT u.id AS user_id, u.display_name, m.role, m.joined_at,
+                u.stats_date, u.stats_days, u.stats_today_passed, u.stats_today_failed, u.stats_week_passed, u.stats_week_failed,
+                u.stats_retrievability,
                 COALESCE(SUM(CASE WHEN d.local_date = ?2 THEN d.review_count END), 0) AS today,
                 COALESCE(SUM(d.review_count), 0) AS week,
                 MAX(d.updated_at) AS last_updated
@@ -89,7 +91,25 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
      WHERE rank <= ?4 OR user_id = ?5 ORDER BY rank`,
   )
     .bind(board.id, date, addDays(date, -6), TOP_N, user.id)
-    .all<{ rank: number; user_id: string; display_name: string; role: Role; joined_at: number; today: number; week: number; last_updated: number | null }>();
+    .all<{
+      rank: number;
+      user_id: string;
+      display_name: string;
+      role: Role;
+      joined_at: number;
+      today: number;
+      week: number;
+      last_updated: number | null;
+      stats_date: string | null;
+      stats_days: number | null;
+      stats_today_passed: number | null;
+      stats_today_failed: number | null;
+      stats_week_passed: number | null;
+      stats_week_failed: number | null;
+      stats_retrievability: number | null;
+    }>();
+  // Statistics older than the board's 7-day window are left out. Today's retention only counts if it was sent today.
+  const freshFrom = addDays(date, -6);
   const total = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM memberships WHERE board_id = ?")
     .bind(board.id)
     .first<{ n: number }>();
@@ -108,7 +128,24 @@ export async function viewBoard(c: Ctx, boardId: string): Promise<Response> {
     role,
     date,
     join_path: showInvite && board.invite_enabled === 1 ? await joinPath(c, board) : null,
-    members: members.results.map((m) => ({ ...m, is_me: m.user_id === user.id })),
+    members: members.results.map(
+      ({ stats_date, stats_days, stats_today_passed, stats_today_failed, stats_week_passed, stats_week_failed, stats_retrievability, ...m }) => ({
+        ...m,
+        is_me: m.user_id === user.id,
+        stats:
+          stats_date !== null && stats_date >= freshFrom && stats_days !== null && stats_week_passed !== null && stats_week_failed !== null
+            ? {
+                days_studied: stats_days,
+                retention_today:
+                  stats_date === date && stats_today_passed !== null && stats_today_failed !== null
+                    ? { passed: stats_today_passed, failed: stats_today_failed }
+                    : null,
+                retention_week: { passed: stats_week_passed, failed: stats_week_failed },
+                retrievability: stats_retrievability,
+              }
+            : null,
+      }),
+    ),
   });
 }
 

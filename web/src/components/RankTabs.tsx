@@ -1,14 +1,17 @@
 export type RankBy = "today" | "week";
+/** The board's three views. Today and 7 days rank by a count. Stats compares Anki statistics. */
+export type BoardTab = RankBy | "stats";
 
-const TABS: { id: RankBy; label: string }[] = [
+const TABS: { id: BoardTab; label: string }[] = [
   { id: "today", label: "Today" },
   { id: "week", label: "7 days" },
+  { id: "stats", label: "Stats" },
 ];
 
-/** Switches the board between ranking by today's count and by the last seven days. */
-export function RankTabs({ value, onChange }: { value: RankBy; onChange: (by: RankBy) => void }) {
+/** Switches between the board's views. */
+export function RankTabs({ value, onChange }: { value: BoardTab; onChange: (tab: BoardTab) => void }) {
   return (
-    <div role="tablist" aria-label="Rank by" className="mb-3 inline-flex rounded-lg border border-border bg-muted p-0.5">
+    <div role="tablist" aria-label="Board view" className="mb-3 inline-flex rounded-lg border border-border bg-muted p-0.5">
       {TABS.map((t) => (
         <button
           key={t.id}

@@ -4,7 +4,7 @@ import { HttpError, json, notFound, readJson } from "./http";
 import { rateLimit } from "./ratelimit";
 import { deleteUser } from "./retention";
 import type { Ctx } from "./types";
-import { deviceLabel, displayName, isRealDate, MAX_REVIEWS_PER_DAY, normaliseLinkCode, normaliseRecoveryCode, plausibleDate, releaseVersion, utcDate } from "./validate";
+import { deviceLabel, displayName, isRealDate, MAX_REVIEWS_PER_DAY, normaliseLinkCode, normaliseRecoveryCode, parseStats, plausibleDate, releaseVersion, utcDate } from "./validate";
 
 const MIN_PUSH_INTERVAL_MS = 30 * 60_000;
 const LINK_CODE_TTL_MS = 10 * 60_000;
@@ -78,17 +78,31 @@ export async function sync(c: Ctx): Promise<Response> {
     const wait = Math.ceil((MIN_PUSH_INTERVAL_MS - (c.now - user.last_push_at)) / 1000);
     throw new HttpError(429, "too_soon", { retry_after_seconds: wait });
   }
+  const stats = parseStats(body.stats);
   await c.env.DB.batch([
     c.env.DB.prepare(
       `INSERT INTO daily_stats (user_id, local_date, review_count, updated_at) VALUES (?1, ?2, ?3, ?4)
        ON CONFLICT (user_id, local_date) DO UPDATE SET
          review_count = MAX(review_count, excluded.review_count), updated_at = excluded.updated_at`,
     ).bind(user.id, date, count, c.now),
-    c.env.DB.prepare("UPDATE users SET last_push_at = ?, last_active_date = ? WHERE id = ?").bind(
-      c.now,
-      utcDate(c.now),
-      user.id,
-    ),
+    // The statistics ride on the same row write as the push time, so they add no rows written.
+    stats
+      ? c.env.DB.prepare(
+          `UPDATE users SET last_push_at = ?, last_active_date = ?, stats_date = ?, stats_days = ?, stats_today_passed = ?,
+             stats_today_failed = ?, stats_week_passed = ?, stats_week_failed = ?, stats_retrievability = ? WHERE id = ?`,
+        ).bind(
+          c.now,
+          utcDate(c.now),
+          date,
+          stats.days_studied,
+          stats.retention_today[0],
+          stats.retention_today[1],
+          stats.retention_week[0],
+          stats.retention_week[1],
+          stats.retrievability,
+          user.id,
+        )
+      : c.env.DB.prepare("UPDATE users SET last_push_at = ?, last_active_date = ? WHERE id = ?").bind(c.now, utcDate(c.now), user.id),
   ]);
   const addonLatest = releaseVersion(c.env.ADDON_LATEST_VERSION);
   return json(addonLatest ? { ok: true, addon_latest: addonLatest } : { ok: true });

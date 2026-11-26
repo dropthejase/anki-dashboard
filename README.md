@@ -2,7 +2,7 @@
 
 A private, invite-only leaderboard for Anki. Create a board, share an invite link with your study group, and see how many cards each person reviewed today and over the last seven days.
 
-An add-on in Anki Desktop reads your daily review count and sends it to a small Cloudflare backend. There are no passwords, no email and no AnkiWeb credentials: the add-on is your identity.
+An add-on in Anki Desktop reads your daily review count and a few of Anki's own statistics (days studied, retention, average retrievability) and sends them to a small Cloudflare backend. There are no passwords, no email and no AnkiWeb credentials: the add-on is your identity.
 
 Status: version 1. It is deployed on Cloudflare's free plan and runs in Anki Desktop. You host your own copy, so you stay in control of the data.
 
